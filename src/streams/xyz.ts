@@ -13,7 +13,7 @@ export class ToXyz extends Transform {
       writableObjectMode: true,
     });
 
-    if (header) this.push("LON,LAT,DEPTH,TIME\n");
+    if (header) this.push("LAT,LON,DEPTH,TIME\n");
   }
 
   _construct(callback: TransformCallback): void {

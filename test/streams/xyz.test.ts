@@ -11,7 +11,7 @@ describe('ToXyz', () => {
     ];
     const result = await text(Readable.from(data).compose(new ToXyz()));
     expect(result).toEqual([
-      "LON,LAT,DEPTH,TIME\n",
+      "LAT,LON,DEPTH,TIME\n",
       "1,2,3,2025-08-06T22:00:00.000Z\n",
       "4,5,6,2025-08-06T23:00:00.000Z\n"
     ].join(''));
