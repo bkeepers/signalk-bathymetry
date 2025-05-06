@@ -1,0 +1,30 @@
+{
+  "name": "signalk-bathymetry",
+  "version": "1.0.0",
+  "description": "crowd-sourced bathymetry data",
+  "keywords": [
+    "bathymetry",
+    "depth",
+    "sonar",
+    "signalk-node-server-plugin",
+    "signalk-category-cloud"
+  ],
+  "homepage": "https://github.com/bkeepers/signalk-bathymetry#readme",
+  "bugs": {
+    "url": "https://github.com/bkeepers/signalk-bathymetry/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bkeepers/signalk-bathymetry.git"
+  },
+  "license": "ISC",
+  "author": "Brandon Keepers",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
