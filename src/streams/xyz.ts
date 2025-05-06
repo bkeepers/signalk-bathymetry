@@ -22,12 +22,7 @@ export class ToXyz extends Transform {
 
   _transform(data: BathymetryData, encoding: string, callback: TransformCallback) {
     const { latitude, longitude, depth, timestamp } = data;
-    this.push([
-      latitude,
-      longitude,
-      depth,
-      timestamp.toISOString(),
-    ].join(",") + "\n");
+    this.push([latitude, longitude, depth, timestamp.toISOString()].join(",") + "\n");
     callback();
   }
 }
