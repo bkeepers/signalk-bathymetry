@@ -1,7 +1,7 @@
 {
   "name": "signalk-bathymetry",
   "version": "1.0.0",
-  "description": "crowd-sourced bathymetry data",
+  "description": "collect and share bathymetry data",
   "keywords": [
     "bathymetry",
     "depth",
@@ -25,6 +25,10 @@
     "test": "vitest"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "@signalk/server-api": "^2.6.1",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^22.15.12",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
   }
 }
