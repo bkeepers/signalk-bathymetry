@@ -48,7 +48,7 @@ export function getMetadata(defaults: Defaults, config: Config) {
     convention: "XYZ CSB 3.0",
     dataLicense: "CC0 1.0",
     platform: {
-      uniqueID: `SIGNALK-${config.id}`,
+      uniqueID: `SIGNALK-${config.uuid}`,
       ...(config.anonymous
         ? {}
         : {

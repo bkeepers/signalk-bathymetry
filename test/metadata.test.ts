@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getMetadata } from "../src/metadata";
+import { Config } from "../src/config";
 
 describe("getMetadata", () => {
   const data = {
@@ -9,9 +10,9 @@ describe("getMetadata", () => {
     loa: 10,
     type: "Sailing",
   };
-  const config = {
+  const config: Config = {
     path: "depthBelowService",
-    id: "1",
+    uuid: "1",
     sounder: { x: 0, y: 0, z: 0 },
     gnss: { x: 0, y: 0, z: 0 },
     anonymous: false,

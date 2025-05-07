@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // Can this be inferred from the JSON schema?
 export type Config = {
-  id: string;
+  uuid: string;
   path: string;
   sounder: {
     x: number;
