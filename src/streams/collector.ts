@@ -5,9 +5,6 @@ import { Config } from "../config";
 export type CollectorOptions = ReadableOptions & {
   /** Maximum age of last position fix for a depth to be saved */
   ttl: number;
-
-  /** Distance in meters from surface of the water to the transducer */
-  surfaceToTransducer: number;
 };
 
 export type BathymetryData = {
@@ -81,17 +78,22 @@ export class Collector extends Readable {
     delta.updates.forEach((update) => {
       if ("values" in update) {
         update.values.forEach(({ path, value }) => {
-          if (path === "navigation.position" && value) {
+          if (!value) return;
+
+          if (path === "navigation.position") {
             this.onPosition(value as Position, new Date(update.timestamp!));
-          } else if (path === "environment.depth.belowTransducer" && value) {
-            const surfaceToTransducer = this.config.sounder?.z ?? 0;
-            this.onDepth((value as number) + surfaceToTransducer, new Date(update.timestamp!));
+          } else {
+            let depth = value as number;
+
+            // Adjust depth to surface
+            if (path === "environment.depth.belowTransducer") {
+              depth += this.config.sounder?.z ?? 0;
+            } else if (path === "environment.depth.belowKeel") {
+              depth += this.config.sounder?.draft ?? 0;
+            }
+
+            this.onDepth(depth, new Date(update.timestamp!));
           }
-          // TODO: Handle other depth paths, unsubscribe from the ones we don't need
-          // In order of preference:
-          // environment.depth.belowSurface
-          // environment.depth.belowKeel + design.draft
-          // environment.depth.belowTransducer + environment.depth.surfaceToTransducer
         });
       }
     });
