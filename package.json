@@ -25,7 +25,8 @@
     "test": "vitest",
     "build": "tsc -b",
     "format": "prettier --write .",
-    "check": "prettier --check ."
+    "check": "prettier --check .",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@signalk/server-api": "^2.6.1",
