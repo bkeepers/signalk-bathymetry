@@ -4,11 +4,12 @@ import { Collector } from "./streams/collector";
 import { ToXyz } from "./streams/xyz";
 import { createWriteStream, existsSync } from "fs";
 import { join } from "path";
-import { pipeline } from "stream";
+import { pipeline } from "stream/promises";
 import { writeMetadata } from "./metadata";
 
 export default function (app: ServerAPI): Plugin {
   let unsubscribes: (() => void)[] = [];
+  let abortController = new AbortController();
 
   return {
     id: "bathymetry",
@@ -36,9 +37,8 @@ export default function (app: ServerAPI): Plugin {
         collector,
         xyz,
         file,
-        // @ts-expect-error
-        (err) => app.error(err),
-      );
+        { signal: abortController.signal },
+      ).catch((err) => app.error(err));
 
       // Subscribe to data updates
       // @ts-expect-error: remove after next signalk release
@@ -56,6 +56,9 @@ export default function (app: ServerAPI): Plugin {
     },
 
     stop() {
+      abortController.abort();
+      abortController = new AbortController();
+
       unsubscribes.forEach((f) => f());
       unsubscribes = [];
     },
