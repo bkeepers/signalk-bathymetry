@@ -30,7 +30,7 @@ export default function (app: ServerAPI): Plugin {
       // Initialize streams
       const collector = new Collector(config as Config);
       const xyz = new ToXyz({ header: !existsSync(filename) });
-      const file = createWriteStream(filename);
+      const file = createWriteStream(filename, { flags: "a" });
 
       // Pipe them together
       pipeline(
