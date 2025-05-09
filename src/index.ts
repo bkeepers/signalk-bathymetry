@@ -7,7 +7,7 @@ import { join } from "path";
 import { pipeline } from "stream/promises";
 import { getMetadata, getVesselInfo } from "./metadata";
 
-export default function (app: ServerAPI): Plugin {
+export default function bathymetery(app: ServerAPI): Plugin {
   let unsubscribes: (() => void)[] = [];
   let abortController = new AbortController();
   let restartTimer: number | undefined = undefined;
@@ -79,3 +79,6 @@ function msToMidnight() {
   const now = new Date();
   return new Date(now).setHours(24, 0, 0, 0).valueOf() - now.valueOf();
 }
+
+// Set module.exports for CJS support
+module.exports = bathymetery;
