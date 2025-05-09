@@ -4,6 +4,8 @@
     "module": "commonjs",
     "resolveJsonModule": true,
     "sourceMap": true,
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "rootDir": "src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

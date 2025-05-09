@@ -2,10 +2,10 @@ import { ServerAPI, Plugin, Delta } from "@signalk/server-api";
 import { schema, Config } from "./config";
 import { Collector } from "./streams/collector";
 import { ToXyz } from "./streams/xyz";
-import { createWriteStream, existsSync } from "fs";
+import { createWriteStream, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { pipeline } from "stream/promises";
-import { writeMetadata } from "./metadata";
+import { getMetadata, getVesselInfo } from "./metadata";
 
 export default function (app: ServerAPI): Plugin {
   let unsubscribes: (() => void)[] = [];
@@ -15,23 +15,24 @@ export default function (app: ServerAPI): Plugin {
   return {
     id: "bathymetry",
     name: "Bathymetry",
-    // @ts-expect-error: remove after next signalk release
     description: "collect and share bathymetry data",
 
-    start(config, restart) {
-      app.debug("Bathymetry plugin started!");
+    // @ts-expect-error: fix config type in server-api
+    start(config: Config, restart) {
+      const basename = [new Date().toISOString().split("T")[0], config.uuid].join('-');
+      const prefix = join(app.getDataDirPath(), basename);
+      const metaFilename = prefix + ".json";
+      const dataFilename = prefix + ".csv";
 
-      writeMetadata(app, config as Config);
+      app.debug(`Writing bathymetery to ${prefix}`);
 
-      const filename = join(
-        app.getDataDirPath(),
-        "bathymetry-" + new Date().toISOString().split("T")[0] + ".csv",
-      );
+      const metadata = getMetadata(getVesselInfo(app), config);
+      writeFileSync(metaFilename, JSON.stringify(metadata, null, 2));
 
       // Initialize streams
       const collector = new Collector(config as Config);
-      const xyz = new ToXyz({ header: !existsSync(filename) });
-      const file = createWriteStream(filename, { flags: "a" });
+      const xyz = new ToXyz({ header: !existsSync(dataFilename) });
+      const file = createWriteStream(dataFilename, { flags: "a" });
 
       // Pipe them together
       pipeline(

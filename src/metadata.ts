@@ -1,10 +1,8 @@
 import { ServerAPI } from "@signalk/server-api";
 import pkg from "../package.json";
 import { Config } from "./config";
-import { writeFile } from "fs/promises";
-import { join } from "path";
 
-export type Defaults = {
+export type VesselInfo = {
   mmsi?: string;
   imo?: string;
   name?: string;
@@ -12,15 +10,9 @@ export type Defaults = {
   type?: string;
 };
 
-export async function writeMetadata(app: ServerAPI, config: Config) {
-  const filename = join(app.getDataDirPath(), "metadata.json");
-  const data = getMetadata(getDefaults(app), config);
-  return writeFile(filename, JSON.stringify(data, null, 2));
-}
-
-export function getDefaults(app: ServerAPI): Defaults {
+export function getVesselInfo(app: ServerAPI): VesselInfo {
   return {
-    // @ts-expect-error
+    // @ts-expect-error remove after next signalk release
     mmsi: app.config.vesselMMSI,
     imo: app.getSelfPath("registrations.imo"),
     name: app.getSelfPath("name"),
@@ -30,7 +22,7 @@ export function getDefaults(app: ServerAPI): Defaults {
 }
 
 // https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
-export function getMetadata(defaults: Defaults, config: Config) {
+export function getMetadata(info: VesselInfo, config: Config) {
   return {
     crs: {
       horizontal: {
@@ -52,12 +44,12 @@ export function getMetadata(defaults: Defaults, config: Config) {
       ...(config.anonymous
         ? {}
         : {
-            type: defaults.type,
-            name: defaults.name,
-            length: defaults.loa,
-            IDType: defaults.mmsi ? "MMSI" : defaults.imo ? "IMO" : undefined,
-            IDNumber: defaults.mmsi ?? defaults.imo,
-          }),
+          type: info.type,
+          name: info.name,
+          length: info.loa,
+          IDType: info.mmsi ? "MMSI" : info.imo ? "IMO" : undefined,
+          IDNumber: info.mmsi ?? info.imo,
+        }),
       sensors: [
         {
           type: "Sounder",
