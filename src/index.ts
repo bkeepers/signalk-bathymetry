@@ -10,6 +10,7 @@ import { writeMetadata } from "./metadata";
 export default function (app: ServerAPI): Plugin {
   let unsubscribes: (() => void)[] = [];
   let abortController = new AbortController();
+  let restartTimer: number | undefined = undefined;
 
   return {
     id: "bathymetry",
@@ -17,7 +18,7 @@ export default function (app: ServerAPI): Plugin {
     // @ts-expect-error: remove after next signalk release
     description: "collect and share bathymetry data",
 
-    start(config: object) {
+    start(config, restart) {
       app.debug("Bathymetry plugin started!");
 
       writeMetadata(app, config as Config);
@@ -53,9 +54,13 @@ export default function (app: ServerAPI): Plugin {
       // @ts-expect-error: remove after next signalk release
       collector.on("warning", (err: Error) => app.setPluginStatus(err));
       collector.on("data", () => app.setPluginStatus("Collecting bathymetry data"));
+
+      // Restart at midnight to log to a new file
+      restartTimer = setTimeout(restart, msToMidnight());
     },
 
     stop() {
+      clearTimeout(restartTimer);
       abortController.abort();
       abortController = new AbortController();
 
@@ -67,4 +72,9 @@ export default function (app: ServerAPI): Plugin {
       return schema(app);
     },
   };
+}
+
+function msToMidnight() {
+  const now = new Date();
+  return new Date(now).setHours(24, 0, 0, 0).valueOf() - now.valueOf();
 }
