@@ -1,19 +1,29 @@
 #!/bin/sh
-# Convert XYZ data to contour data
+# Convert XYZ data to mbtilses using gdal and tippecanoe
 #
-# Usage: bin/xyz-to-contours <input.xyz>
+# Usage: bin/xyz-to-mbtiles <input.xyz>
 #
 # Set FAST=true to speed up the process, but with lower resolution
+# Set DEBUG=true to enable debug mode
 
-set -ex
+set -e
+[ -z "$DEBUG" ] || set -x
 
-cd "$(dirname "$0")/.."
+ROOTDIR="$(cd "$(dirname "$0")/.." && pwd)"
+DATADIR="$(cd "$(dirname "$1")" && pwd)"
 
-# TMPDIR=$(mktemp --directory -p $PWD/data/tmp)
-TMPDIR=$PWD/data/tmp
-NODATA=0.0
+# TMPDIR=$(mktemp --directory -p $DATADIR/tmp)
+TMPDIR=$DATADIR/tmp
 [ -Z "$FAST"] && RESOLUTION=0.00001 || RESOLUTION=0.0001 # 5 m or 10 m
-RADIUS=0.0002 # 0.0002 deg = ~22m
+
+# The value to use for grid cells with no data
+NODATA=0.0
+
+# The radius of a single data point relative to geo coordinates, e.g. 0.0002 deg = ~22m
+RADIUS=0.0002
+
+# The algorithm to use for the grid
+# https://gdal.org/en/stable/programs/gdal_grid.html#interpolation-algorithms
 ALGORITHM="invdist:radius=$RADIUS:max_points=12:nodata=$NODATA"
 # ALGORITHM="invdist:power=2.0:radius$RADIUS:max_points=12:min_points=1:nodata=$NODATA"
 # ALGORITHM="average:radius=$RADIUS:max_points=10:nodata=$NODATA"
