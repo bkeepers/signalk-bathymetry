@@ -29,6 +29,7 @@
     "prepare": "npm run build"
   },
   "devDependencies": {
+    "@mapbox/mbview": "^5.1.0",
     "@signalk/server-api": "^2.6.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.15.12",

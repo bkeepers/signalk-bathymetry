@@ -1,0 +1,75 @@
+#!/bin/sh
+# Convert XYZ data to contour data
+#
+# Usage: bin/xyz-to-contours <input.xyz>
+#
+# Set FAST=true to speed up the process, but with lower resolution
+
+set -ex
+
+cd "$(dirname "$0")/.."
+
+# TMPDIR=$(mktemp --directory -p $PWD/data/tmp)
+TMPDIR=$PWD/data/tmp
+NODATA=0.0
+[ -Z "$FAST"] && RESOLUTION=0.00001 || RESOLUTION=0.0001 # 5 m or 10 m
+RADIUS=0.0002 # 0.0002 deg = ~22m
+ALGORITHM="invdist:radius=$RADIUS:max_points=12:nodata=$NODATA"
+# ALGORITHM="invdist:power=2.0:radius$RADIUS:max_points=12:min_points=1:nodata=$NODATA"
+# ALGORITHM="average:radius=$RADIUS:max_points=10:nodata=$NODATA"
+
+mkdir -p $TMPDIR
+
+echo "Converting XYZ to GeoJSON points..."
+cat $1 | node bin/xyz-to-geojson > $TMPDIR/points.geojson
+
+# Get the extends of the data
+EXTENTS=$(jq -r '[.features[].geometry.coordinates] | "-txe \((min_by(.[0]) | .[0] - 0.01)) \((max_by(.[0]) | .[0] + 0.01)) -tye \((min_by(.[1]) | .[1] - 0.01)) \((max_by(.[1]) | .[1] + 0.01))"' $TMPDIR/points.geojson)
+
+echo "Creating grid..."
+
+gdal_grid \
+  $EXTENTS \
+  -tr $RESOLUTION $RESOLUTION \
+  -a $ALGORITHM \
+  -z_multiply 3.28 \
+  -of GTiff \
+  -ot Float64 \
+  -zfield depth \
+  --config GDAL_NUM_THREADS ALL_CPUS \
+  $TMPDIR/points.geojson $TMPDIR/depth.tif
+
+gdalinfo -stats $TMPDIR/depth.tif
+
+# gdal_calc \
+#   -A $TMPDIR/depth.tif \
+#   --outfile=$TMPDIR/depth.tif \
+#   --calc="A*(A>0)*(A<1000)" \
+#   --NoDataValue=$NODATA
+
+# gdalinfo -stats $TMPDIR/depth.tif
+
+echo "Creating contour lines..."
+gdal_contour \
+  -snodata $NODATA \
+  -a depth \
+  -i 1 \
+  $TMPDIR/depth.tif $TMPDIR/lines.geojson
+
+echo "Creating contour polygons..."
+gdal_contour \
+  -snodata $NODATA \
+  -amin depth \
+  -p \
+  -i 1 \
+  $TMPDIR/depth.tif $TMPDIR/polygons.geojson
+
+echo "Creating mbtiles..."
+tippecanoe \
+  -o $TMPDIR/depth.mbtiles \
+  -zg \
+  --drop-densest-as-needed \
+  --force \
+  $TMPDIR/contours.geojson
+
+echo "Done. Output is in $TMPDIR/"
