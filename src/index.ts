@@ -2,7 +2,8 @@ import { ServerAPI, Plugin, Delta } from "@signalk/server-api";
 import { schema, Config } from "./config";
 import { Collector } from "./streams/collector";
 import { ToXyz } from "./streams/xyz";
-import { toPrecision } from "./streams/transforms";
+import { transform } from "stream-transform";
+import { toPrecision, correctForSensorPosition } from "./streams/transforms";
 import { createWriteStream, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { pipeline } from "stream/promises";
@@ -38,7 +39,8 @@ export default function bathymetery(app: ServerAPI): Plugin {
       // Pipe them together
       pipeline(
         collector,
-        toPrecision(5),
+        transform(correctForSensorPosition(config)),
+        transform(toPrecision(5)),
         xyz,
         file,
         { signal: abortController.signal },

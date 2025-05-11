@@ -12,11 +12,13 @@ export type BathymetryData = {
   longitude: number;
   depth: number;
   timestamp: Date;
+  heading?: number;
 };
 
 /** Create a stream of bathymetry data from Signal K deltas */
 export class Collector extends Readable {
   lastPosition: (Position & { timestamp: Date }) | undefined = undefined;
+  lastHeading: { value: number; timestamp: Date } | undefined = undefined;
 
   /** Maximum age of last position fix for a depth to be saved */
   ttl: number = 2000;
@@ -40,13 +42,12 @@ export class Collector extends Readable {
           path: `environment.depth.${this.config.path}`,
           policy: "instant",
         },
+        {
+          path: "navigation.headingTrue",
+          policy: "instant",
+        }
       ],
     };
-  }
-
-  onPosition(position: Position, timestamp: Date = new Date()) {
-    // Store the last position so it can be used when depth data is received
-    this.lastPosition = { ...position, timestamp };
   }
 
   onDepth(depth: number, timestamp: Date = new Date()) {
@@ -60,11 +61,18 @@ export class Collector extends Readable {
       return;
     }
 
+    if (!this.lastHeading) {
+      this.emit("warning", new Error("Received depth data, but no known heading."));
+    } else if (timestamp.valueOf() - this.lastHeading.timestamp.valueOf() > this.ttl) {
+      this.emit("warning", new Error("Received depth data, but last heading is too old."));
+    }
+
     const { latitude, longitude } = this.lastPosition;
 
     const data: BathymetryData = {
       latitude,
       longitude,
+      heading: this.lastHeading?.value,
       depth,
       timestamp,
     };
@@ -80,8 +88,13 @@ export class Collector extends Readable {
         update.values.forEach(({ path, value }) => {
           if (!value) return;
 
+          const timestamp = new Date(update.timestamp ?? Date.now());
+
           if (path === "navigation.position") {
-            this.onPosition(value as Position, new Date(update.timestamp!));
+            // Store the last position so it can be used when depth data is received
+            this.lastPosition = { ...value as Position, timestamp };
+          } else if (path === "navigation.headingTrue") {
+            this.lastHeading = { value: value as number, timestamp };
           } else {
             let depth = value as number;
 
@@ -92,7 +105,7 @@ export class Collector extends Readable {
               depth += this.config.sounder?.draft ?? 0;
             }
 
-            this.onDepth(depth, new Date(update.timestamp!));
+            this.onDepth(depth, timestamp);
           }
         });
       }
