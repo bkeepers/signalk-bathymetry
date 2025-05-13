@@ -15,7 +15,7 @@ export function useExtent(): UseExtentsReturn {
       extent.x = minmax(x, ...extent.x);
       extent.y = minmax(y, ...extent.y);
       return extent;
-    }
+    },
   ];
 }
 
@@ -27,13 +27,10 @@ export function padExtent({ x, y }: Extent, padding: number): Extent {
 }
 
 function minmax(candidate: number | undefined | null, min: number, max: number): [number, number] {
-  if (typeof candidate !== 'number') return [min, max];
+  if (typeof candidate !== "number") return [min, max];
   return [Math.min(min, candidate), Math.max(max, candidate)];
 }
 
-export type Extent = { x: [number, number]; y: [number, number]; };
+export type Extent = { x: [number, number]; y: [number, number] };
 
-export type UseExtentsReturn = [
-  Extent,
-  (x?: number, y?: number) => Extent
-];
+export type UseExtentsReturn = [Extent, (x?: number, y?: number) => Extent];

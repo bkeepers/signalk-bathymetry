@@ -1,5 +1,6 @@
 import { Readable } from "stream";
 import { Config } from "./config";
+import { ServerAPI } from "@signalk/server-api";
 
 export type BathymetryData = {
   latitude: number;
@@ -15,8 +16,8 @@ export interface BathymetrySourceOptions {
 }
 
 export interface BathymetrySource extends BathymetrySourceOptions {
-  start(app: any): Promise<void>;
+  start(app: ServerAPI): Promise<void>;
   stop(): void | Promise<void>;
-  getStream(options: { from: string, to: string }): Promise<Readable>;
+  getStream(options: { from: string; to: string }): Promise<Readable>;
   getAvailableDates(): Promise<string[]>;
 }

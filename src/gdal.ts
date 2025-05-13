@@ -1,19 +1,19 @@
-import { Extent, padExtent } from "./useExtent"
-import { extname } from "path"
+import { Extent, padExtent } from "./useExtent";
+import { extname } from "path";
 
-const NODATA = '0.0'
+const NODATA = "0.0";
 
 // The radius of a single data point relative to geo coordinates, e.g. 0.0002 deg = ~22m
-const RADIUS = 0.00028
+const RADIUS = 0.00028;
 
 export type GridOptions = {
-  extent: Extent,
-  src: string,
-  dst?: string,
-  fast?: boolean
-  resolution?: number
-  multiplier?: number
-}
+  extent: Extent;
+  src: string;
+  dst?: string;
+  fast?: boolean;
+  resolution?: number;
+  multiplier?: number;
+};
 
 export async function grid({
   src,
@@ -25,22 +25,33 @@ export async function grid({
 }: GridOptions) {
   // The algorithm to use for the grid
   // https://gdal.org/en/stable/programs/gdal_grid.html#interpolation-algorithms
-  const algorithm = `invdist:radius=${RADIUS}:max_points=5:nodata=${NODATA}`
+  const algorithm = `invdist:radius=${RADIUS}:max_points=5:nodata=${NODATA}`;
   // const algorithm = `average:radius=${RADIUS}:nodata=${NODATA}`
 
-  const { x, y } = padExtent(extent, 0.01)
+  const { x, y } = padExtent(extent, 0.01);
 
-  return exec("gdal_grid", [
-    "-txe", ...x,
-    "-tye", ...y,
-    "-tr", resolution, resolution,
-    "-a", algorithm,
-    "-z_multiply", multiplier,
-    "-of", "GTiff",
-    "-zfield", "depth",
-    src,
-    dst,
-  ].map(n => n.toString()))
+  return exec(
+    "gdal_grid",
+    [
+      "-txe",
+      ...x,
+      "-tye",
+      ...y,
+      "-tr",
+      resolution,
+      resolution,
+      "-a",
+      algorithm,
+      "-z_multiply",
+      multiplier,
+      "-of",
+      "GTiff",
+      "-zfield",
+      "depth",
+      src,
+      dst,
+    ].map((n) => n.toString()),
+  );
 }
 
 export type ContourOptions = {
@@ -48,7 +59,7 @@ export type ContourOptions = {
   dst?: string;
   i?: number;
   p?: boolean;
-}
+};
 
 export function contour({
   src,
@@ -59,35 +70,44 @@ export function contour({
   return exec(
     "gdal_contour",
     [
-      "-snodata", NODATA,
-      "-i", i,
+      "-snodata",
+      NODATA,
+      "-i",
+      i,
       ...(p ? ["-p", "-amin", "depth"] : ["-a", "depth"]),
       src,
-      dst
-    ].map(n => n.toString())
-  )
+      dst,
+    ].map((n) => n.toString()),
+  );
 }
 
 export type MBTilesOptions = {
   src: string[];
   dst: string;
-}
+};
 
 export function mbtiles({ src, dst }: MBTilesOptions) {
   return exec("tippecanoe", [
-    "-n", "Bathymetry",
-    "-N", "Custom depth data from your own vessel",
-    "-o", dst,
+    "-n",
+    "Bathymetry",
+    "-N",
+    "Custom depth data from your own vessel",
+    "-o",
+    dst,
     "-zg",
     "--drop-densest-as-needed",
     "--force",
-    ...src
-  ])
+    ...src,
+  ]);
 }
 
 async function exec(command: string, args: string[]) {
   // Execa is ESM-only
   const { execa } = await import("execa");
 
-  return execa(command, args.map(n => n.toString()), { verbose: "short", stdout: ["pipe", "inherit"] })
+  return execa(
+    command,
+    args.map((n) => n.toString()),
+    { verbose: "short", stdout: ["pipe", "inherit"] },
+  );
 }

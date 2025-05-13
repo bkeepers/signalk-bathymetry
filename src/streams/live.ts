@@ -32,16 +32,16 @@ export function createLiveStream(app: ServerAPI, config: Config) {
             const heading = app.getSelfPath("navigation.headingTrue");
 
             if ("values" in update) {
-              update.values.forEach(({ value, path }) => {
-                // console.log({ path, value });
-
+              update.values.forEach(({ value }) => {
                 if (!value) return;
-                const depth = value as number + offset;
+                const depth = (value as number) + offset;
 
                 if (!position) return app.debug("No position data, ignoring depth data");
                 if (!heading) return app.debug("No heading data, ignoring depth data");
-                if (isStale(position, timestamp, ttl)) return app.debug("Stale position data, ignoring depth data")
-                if (isStale(heading, timestamp, ttl)) return app.debug("Stale heading data, ignoring depth data");
+                if (isStale(position, timestamp, ttl))
+                  return app.debug("Stale position data, ignoring depth data");
+                if (isStale(heading, timestamp, ttl))
+                  return app.debug("Stale heading data, ignoring depth data");
 
                 this.push({
                   longitude: position.value.longitude,
@@ -49,7 +49,7 @@ export function createLiveStream(app: ServerAPI, config: Config) {
                   depth,
                   timestamp,
                   heading: heading?.value,
-                })
+                });
               });
             }
           });
@@ -63,7 +63,7 @@ export function createLiveStream(app: ServerAPI, config: Config) {
       // This method is required for the Readable stream, but we don't need to implement it
       // because we are pushing data to the stream
     },
-  })
+  });
 }
 
 function isStale(object: { timestamp: string }, timestamp: Date, ttl: number) {

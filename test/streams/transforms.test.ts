@@ -11,21 +11,21 @@ describe("getOffsets", () => {
       distance: 0,
       bearing: 0,
       dx: 0,
-      dy: 0
+      dy: 0,
     });
-  })
+  });
 
   test("sounder forward", () => {
     const gnss = { x: 0, y: 2 };
     const sounder = { x: 0, y: 1 };
     expect(getOffsets({ gnss, sounder })).toEqual({ distance: 1, bearing: 0, dx: 0, dy: 1 });
-  })
+  });
 
   test("sounder aft", () => {
     const gnss = { x: 0, y: 1 };
     const sounder = { x: 0, y: 2 };
     expect(getOffsets({ gnss, sounder })).toEqual({ distance: 1, bearing: 180, dx: 0, dy: -1 });
-  })
+  });
 
   test("sounder aft and port of gnss", () => {
     const gnss = { x: 0.5, y: 1 };
@@ -35,7 +35,7 @@ describe("getOffsets", () => {
       distance: 1.4142135623730951,
       bearing: 225,
       dx: -1,
-      dy: -1
+      dy: -1,
     });
   });
 
@@ -43,7 +43,7 @@ describe("getOffsets", () => {
     const gnss = { x: -1.5, y: 13 };
     const sounder = { x: -0.5, y: 3 };
 
-    const { distance, bearing, dx, dy } = getOffsets({ gnss, sounder })
+    const { distance, bearing, dx, dy } = getOffsets({ gnss, sounder });
     expect(distance).toBeCloseTo(10.05, 2);
     expect(bearing).toBeCloseTo(5.71, 2);
     expect(dx).toEqual(1);
@@ -51,20 +51,19 @@ describe("getOffsets", () => {
   });
 });
 
-
 describe("correctForSensorPosition", () => {
   const data = {
     latitude: 1,
     longitude: 1,
     heading: 0,
     depth: 1,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 
   test("no offset", () => {
     const corrector = correctForSensorPosition({
       gnss: { x: 0, y: 0 },
-      sounder: { x: 0, y: 0 }
+      sounder: { x: 0, y: 0 },
     });
 
     expect(corrector(data)).toEqual({
@@ -78,7 +77,7 @@ describe("correctForSensorPosition", () => {
   test("sounder forward", () => {
     const corrector = correctForSensorPosition({
       gnss: { x: 0, y: 10 },
-      sounder: { x: 0, y: 0 }
+      sounder: { x: 0, y: 0 },
     });
 
     const corrected = corrector(data);
@@ -88,7 +87,6 @@ describe("correctForSensorPosition", () => {
     expect(corrected.longitude).toEqual(data.longitude);
     expect(corrected.depth).toEqual(data.depth);
     expect(corrected.timestamp).toEqual(data.timestamp);
-    expect(corrected.hasOwnProperty("heading")).toBe(false);
-  })
-
+    expect("heading" in corrected).toBe(false);
+  });
 });

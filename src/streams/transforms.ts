@@ -1,20 +1,21 @@
 import { BathymetryData } from "../types";
-import { computeDestinationPoint } from "geolib"
+import { computeDestinationPoint } from "geolib";
 
-// 5 decimal places for latitude and longitude = ~1.1m precision at the equator
-export function toPrecision(n: number = 5) {
+// 5 decimal places = ~1.1m precision
+// 6 decimal places = ~11cm precision
+export function toPrecision(n: number = 6) {
   return (data: BathymetryData) => {
     return {
       ...data,
-      latitude: parseFloat(data.latitude.toFixed(6)),
-      longitude: parseFloat(data.longitude.toFixed(6)),
-    }
-  }
+      latitude: parseFloat(data.latitude.toFixed(n)),
+      longitude: parseFloat(data.longitude.toFixed(n)),
+    };
+  };
 }
 
 export type SensorConfig = {
-  gnss: { x: number, y: number };
-  sounder: { x: number, y: number };
+  gnss: { x: number; y: number };
+  sounder: { x: number; y: number };
 };
 
 export function correctForSensorPosition(config: SensorConfig) {
@@ -25,14 +26,14 @@ export function correctForSensorPosition(config: SensorConfig) {
     if (heading === undefined || distance === 0) return data;
 
     // Convert heading from radians to degrees, and adjust for the offset bearing
-    const sensorBearing = ((heading * 180 / Math.PI) + bearing) % 360;
-    const corrected = computeDestinationPoint(data, distance, sensorBearing)
+    const sensorBearing = ((heading * 180) / Math.PI + bearing) % 360;
+    const corrected = computeDestinationPoint(data, distance, sensorBearing);
 
     return {
       ...data,
-      ...corrected
+      ...corrected,
     };
-  }
+  };
 }
 
 /** Get the offsets between the gnss and the sounder */
@@ -49,6 +50,6 @@ export function getOffsets({ gnss, sounder }: SensorConfig) {
     dx,
     dy,
     distance: Math.abs(Math.sqrt(dx * dx + dy * dy)),
-    bearing: (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360,
-  }
+    bearing: ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360,
+  };
 }

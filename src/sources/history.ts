@@ -2,12 +2,12 @@ import { Config } from "../config";
 import { parser } from "stream-json";
 import { pick } from "stream-json/filters/Pick";
 import { streamArray } from "stream-json/streamers/StreamArray";
-import { chain } from 'stream-chain';
+import { chain } from "stream-chain";
 import { Readable } from "stream";
 import { BathymetrySource, BathymetrySourceOptions } from "../types";
 import { ServerAPI } from "@signalk/server-api";
 
-const DEFAULT_HOST = process.env.SIGNALK_HOST ?? 'http://localhost:3000';
+const DEFAULT_HOST = process.env.SIGNALK_HOST ?? "http://localhost:3000";
 
 export class HistorySource implements BathymetrySource {
   host: string;
@@ -43,14 +43,14 @@ export class HistorySource implements BathymetrySource {
       from,
       to,
       paths: `environment.depth.${this.config.path}`,
-      resolution: '86400', // 1 day
-    })
+      resolution: "86400", // 1 day
+    });
     return chain([
       stream,
       ({ value }: { value: [string, number | null] }) => {
-        if (value[1]) return value[0]
-      }
-    ]).toArray()
+        if (value[1]) return value[0];
+      },
+    ]).toArray();
   }
 
   async getStream({ from, to }: HistoryStreamOptions) {
@@ -58,47 +58,44 @@ export class HistorySource implements BathymetrySource {
       from,
       to,
       paths: [
-        'navigation.position',
+        "navigation.position",
         `environment.depth.${this.config.path}`,
-        'navigation.headingTrue',
-      ].join(','),
-      resolution: '1',
-    })
+        "navigation.headingTrue",
+      ].join(","),
+      resolution: "1",
+    });
 
-    return Readable.from(chain([
-      stream,
-      ({ value }: { value: HistoryData }) => {
-        const [timestamp, position, depth, heading] = value;
+    return Readable.from(
+      chain([
+        stream,
+        ({ value }: { value: HistoryData }) => {
+          const [timestamp, position, depth, heading] = value;
 
-        if (depth !== null && position[0] !== null && position[1] !== null) {
-          return {
-            timestamp: new Date(timestamp),
-            longitude: position?.[0],
-            latitude: position?.[1],
-            depth,
-            heading
-          };
-        }
-      }
-    ]))
+          if (depth !== null && position[0] !== null && position[1] !== null) {
+            return {
+              timestamp: new Date(timestamp),
+              longitude: position?.[0],
+              latitude: position?.[1],
+              depth,
+              heading,
+            };
+          }
+        },
+      ]),
+    );
   }
 
   async get(query: Record<string, string>) {
     const url = new URL(`${this.host}/signalk/v1/history/values`);
     url.search = new URLSearchParams(query).toString();
 
-    const response = await fetch(url)
+    const response = await fetch(url);
 
     if (!response.ok || !response.body) {
       throw new Error(`Failed to fetch history: ${response.statusText}`);
     }
 
-    return chain([
-      response.body,
-      parser(),
-      pick({ filter: "data" }),
-      streamArray(),
-    ]);
+    return chain([response.body, parser(), pick({ filter: "data" }), streamArray()]);
   }
 }
 
@@ -110,8 +107,8 @@ type HistoryData = [
   /** depth */
   number | null,
   /** heading */
-  number | null
-]
+  number | null,
+];
 
 export interface HistorySourceOptions extends BathymetrySourceOptions {
   host?: string;
@@ -120,4 +117,4 @@ export interface HistorySourceOptions extends BathymetrySourceOptions {
 export type HistoryStreamOptions = {
   from: string;
   to: string;
-}
+};

@@ -1,4 +1,4 @@
-import { ServerAPI, Plugin, Delta } from "@signalk/server-api";
+import { ServerAPI, Plugin } from "@signalk/server-api";
 import { schema, Config } from "./config";
 import { render } from "./renderer";
 import { HistorySource } from "./sources";
@@ -15,9 +15,9 @@ export default function createPlugin(app: ServerAPI): Plugin {
     description: "collect and share bathymetry data",
 
     // @ts-expect-error: fix config type in server-api
-    async start(config: Config, restart) {
+    async start(config: Config) {
       const datadir = app.getDataDirPath();
-      const chartsdir = join(datadir, '../../charts');
+      const chartsdir = join(datadir, "../../charts");
 
       // TODO: make configurable with own data source
       source = new HistorySource({ config, datadir });
