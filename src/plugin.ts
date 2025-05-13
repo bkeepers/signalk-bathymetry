@@ -5,6 +5,7 @@ import { HistorySource } from "./sources";
 import { BathymetrySource } from "./types";
 import { join } from "path";
 import { Debugger } from "debug";
+import { detectDependencies } from "./dependencies";
 
 export default function createPlugin(app: ServerAPI): Plugin {
   let source: BathymetrySource | undefined = undefined;
@@ -17,7 +18,10 @@ export default function createPlugin(app: ServerAPI): Plugin {
     // @ts-expect-error: fix config type in server-api
     async start(config: Config) {
       const datadir = app.getDataDirPath();
-      const chartsdir = join(datadir, "../../charts");
+      const configdir = join(datadir, "../..");
+      const chartsdir = join(configdir, "charts");
+
+      detectDependencies({ debug: app.debug as Debugger, configdir });
 
       // TODO: make configurable with own data source
       source = new HistorySource({ config, datadir });
