@@ -1,5 +1,5 @@
 import { Transform, TransformCallback, TransformOptions } from "stream";
-import { BathymetryData } from "./collector";
+import { BathymetryData } from "../types";
 import { parse } from "csv-parse";
 
 /**

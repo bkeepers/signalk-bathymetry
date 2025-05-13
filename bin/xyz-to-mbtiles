@@ -20,13 +20,13 @@ TMPDIR=$DATADIR/tmp
 NODATA=0.0
 
 # The radius of a single data point relative to geo coordinates, e.g. 0.0002 deg = ~22m
-RADIUS=0.0002
+RADIUS=0.00028
 
 # The algorithm to use for the grid
 # https://gdal.org/en/stable/programs/gdal_grid.html#interpolation-algorithms
-ALGORITHM="invdist:radius=$RADIUS:max_points=12:nodata=$NODATA"
+ALGORITHM="invdist:radius=$RADIUS:max_points=10:nodata=$NODATA"
 # ALGORITHM="invdist:power=2.0:radius$RADIUS:max_points=12:min_points=1:nodata=$NODATA"
-# ALGORITHM="average:radius=$RADIUS:max_points=10:nodata=$NODATA"
+# ALGORITHM="average:radius=$RADIUS:nodata=$NODATA"
 
 mkdir -p $TMPDIR
 
@@ -76,10 +76,13 @@ gdal_contour \
 
 echo "Creating mbtiles..."
 tippecanoe \
+  -n Bathymetry \
+  -N "Custom depth data from your own vessel" \
   -o $TMPDIR/depth.mbtiles \
   -zg \
   --drop-densest-as-needed \
   --force \
-  $TMPDIR/contours.geojson
+  $TMPDIR/polygons.geojson \
+  $TMPDIR/lines.geojson
 
 echo "Done. Output is in $TMPDIR/"

@@ -1,5 +1,5 @@
 import { Transform, TransformOptions } from "stream";
-import { BathymetryData } from "./collector";
+import { BathymetryData } from "../types";
 import * as GeoJSON from "geojson";
 
 export class ToGeoJSON extends Transform {
@@ -16,7 +16,7 @@ export class ToGeoJSON extends Transform {
   _transform(data: BathymetryData, encoding: string, callback: (error?: Error | null) => void) {
     this.push(this.started ? "," : '{"type": "FeatureCollection","features":[');
     this.started = true;
-    this.push(JSON.stringify(toGeoJSONFeature(data)));
+    this.push(JSON.stringify(toFeature(data)));
     callback();
   }
 
@@ -27,7 +27,7 @@ export class ToGeoJSON extends Transform {
 }
 
 /** Converts a Bathymetry data point to a GeoJSON Feature */
-export function toGeoJSONFeature({
+export function toFeature({
   latitude,
   longitude,
   depth,

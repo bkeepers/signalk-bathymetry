@@ -1,4 +1,4 @@
-import { BathymetryData } from "./collector";
+import { BathymetryData } from "../types";
 import { computeDestinationPoint } from "geolib"
 
 // 5 decimal places for latitude and longitude = ~1.1m precision at the equator
