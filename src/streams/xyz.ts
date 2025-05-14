@@ -1,5 +1,6 @@
 import { Transform, TransformCallback, TransformOptions } from "stream";
-import { BathymetryData } from "./collector";
+import { BathymetryData } from "../types";
+import { parse } from "csv-parse";
 
 /**
  * Converts BathymetryData to XYZ format.
@@ -13,7 +14,7 @@ export class ToXyz extends Transform {
       writableObjectMode: true,
     });
 
-    if (header) this.push("LAT,LON,DEPTH,TIME\n");
+    if (header) this.push("LON,LAT,DEPTH,TIME,HEAD\n");
   }
 
   _construct(callback: TransformCallback): void {
@@ -21,8 +22,36 @@ export class ToXyz extends Transform {
   }
 
   _transform(data: BathymetryData, encoding: string, callback: TransformCallback) {
-    const { latitude, longitude, depth, timestamp } = data;
-    this.push([latitude, longitude, depth, timestamp.toISOString()].join(",") + "\n");
+    const { latitude, longitude, depth, timestamp, heading } = data;
+    this.push(
+      [longitude, latitude, depth, timestamp.toISOString(), heading ?? ""].join(",") + "\n",
+    );
     callback();
   }
+}
+
+const XyzToBathymetry = {
+  LAT: "latitude",
+  LON: "longitude",
+  DEPTH: "depth",
+  TIME: "timestamp",
+  HEAD: "heading",
+};
+
+export function fromXyz() {
+  return parse({
+    cast_date: true,
+    columns(header: (keyof typeof XyzToBathymetry)[]) {
+      return header.map((key) => XyzToBathymetry[key] || key);
+    },
+    cast(value, context) {
+      if (context.header) return value;
+      if (value === "") return undefined;
+      if (context.column === "timestamp") {
+        return new Date(value);
+      } else {
+        return Number(value);
+      }
+    },
+  });
 }
