@@ -6,6 +6,12 @@ const NODATA = "0.0";
 // The radius of a single data point relative to geo coordinates, e.g. 0.0002 deg = ~22m
 const RADIUS = 0.00028;
 
+// Hack to allow configuring path to commands
+const commands = Object.fromEntries(['gdal_grid', 'gdal_contour', 'tippecanoe'].map((cmd) => {
+  const path = process.env[`${cmd.toUpperCase()}_PATH`]
+  return [cmd, path ? path.split(/\s+/) : [cmd]];
+}));
+
 export type GridOptions = {
   extent: Extent;
   src: string;
@@ -105,9 +111,14 @@ async function exec(command: string, args: string[]) {
   // Execa is ESM-only
   const { execa } = await import("execa");
 
+  const [cmd, ...preargs] = commands[command];
+
   return execa(
-    command,
-    args.map((n) => n.toString()),
+    cmd,
+    [
+      ...preargs,
+      ...args.map((n) => n.toString())
+    ],
     { verbose: "short", stdout: ["pipe", "inherit"] },
   );
 }
