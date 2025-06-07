@@ -14,7 +14,6 @@ export default function createPlugin(app: ServerAPI): Plugin {
     name: "Bathymetry",
     description: "collect and share bathymetry data",
 
-    // @ts-expect-error: fix config type in server-api
     async start(config: Config) {
       const datadir = app.getDataDirPath();
       const chartsdir = join(datadir, "../../charts");

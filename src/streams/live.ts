@@ -1,4 +1,4 @@
-import { Delta, ServerAPI } from "@signalk/server-api";
+import { Context, Delta, Path, ServerAPI } from "@signalk/server-api";
 import { Readable } from "stream";
 import { Config } from "../config";
 
@@ -17,14 +17,13 @@ export function createLiveStream(app: ServerAPI, config: Config) {
 
     construct() {
       // Subscribe to data updates
-      // @ts-expect-error: remove after next signalk release
       app.subscriptionmanager.subscribe(
         {
-          context: "vessels.self",
-          subscribe: [{ path: `environment.depth.${config.path}`, policy: "instant" }],
+          context: "vessels.self" as Context,
+          subscribe: [{ path: `environment.depth.${config.path}` as Path, policy: "instant" }],
         },
         unsubscribes,
-        (error: string) => app.error(error),
+        (error) => app.error(error as string),
         (delta: Delta) => {
           delta.updates.forEach((update) => {
             const timestamp = new Date(update.timestamp ?? Date.now());

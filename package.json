@@ -35,7 +35,7 @@
   "devDependencies": {
     "@eslint/js": "^9.26.0",
     "@mapbox/mbview": "^5.1.0",
-    "@signalk/server-api": "^2.6.1",
+    "@signalk/server-api": "^2.7.0",
     "@types/debug": "^4.1.12",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.15.12",
