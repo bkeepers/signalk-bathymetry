@@ -17,10 +17,6 @@ export class ToXyz extends Transform {
     if (header) this.push("LON,LAT,DEPTH,TIME,HEAD\n");
   }
 
-  _construct(callback: TransformCallback): void {
-    callback();
-  }
-
   _transform(data: BathymetryData, encoding: string, callback: TransformCallback) {
     const { latitude, longitude, depth, timestamp, heading } = data;
     this.push(

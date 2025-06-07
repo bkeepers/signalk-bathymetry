@@ -11,7 +11,7 @@ export async function xyzToGeoJSON({ input = process.stdin, output = process.std
   return pipeline(
     input,
     fromXyz(),
-    transform(toPrecision(5)),
+    transform(toPrecision()),
     // My sounder outputs 42949672.9 if it can't read data. Maximum known ocean depth is <11000m
     transform((data: BathymetryData) => (data.depth < 11000 ? data : null)),
     new ToGeoJSON(),
