@@ -14,7 +14,7 @@ export function toPrecision({ coordinates = 7, depth = 3, heading = 3 } = {}) {
       ...data,
       latitude: parseFloat(data.latitude.toFixed(coordinates)),
       longitude: parseFloat(data.longitude.toFixed(coordinates)),
-      depth: parseFloat(depth.toFixed(depth)),
+      depth: parseFloat(data.depth.toFixed(depth)),
       heading: data.heading ? parseFloat(data.heading.toFixed(heading)) : undefined,
     };
   };
