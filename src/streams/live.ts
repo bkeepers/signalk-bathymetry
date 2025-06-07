@@ -28,7 +28,7 @@ export function createLiveStream(app: ServerAPI, config: Config) {
           delta.updates.forEach((update) => {
             const timestamp = new Date(update.timestamp ?? Date.now());
             const position = app.getSelfPath("navigation.position");
-            const heading = app.getSelfPath("navigation.headingTrue");
+            let heading = app.getSelfPath("navigation.headingTrue");
 
             if ("values" in update) {
               update.values.forEach(({ value }) => {
@@ -36,11 +36,18 @@ export function createLiveStream(app: ServerAPI, config: Config) {
                 const depth = (value as number) + offset;
 
                 if (!position) return app.debug("No position data, ignoring depth data");
-                if (!heading) return app.debug("No heading data, ignoring depth data");
                 if (isStale(position, timestamp, ttl))
                   return app.debug("Stale position data, ignoring depth data");
-                if (isStale(heading, timestamp, ttl))
-                  return app.debug("Stale heading data, ignoring depth data");
+
+                // TODO: Figure out the right behavior here. A couple options:
+                // 1. Only require heading if configured sensor offsets are significant
+                // 2. Use dead reckoning to guess heading from last position
+                if (!heading) {
+                  app.debug("No heading data");
+                } else if (isStale(heading, timestamp, ttl)) {
+                  app.debug("Stale heading data");
+                  heading = undefined;
+                }
 
                 this.push({
                   longitude: position.value.longitude,
