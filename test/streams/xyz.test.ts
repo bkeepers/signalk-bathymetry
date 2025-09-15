@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { fromXyz, ToXyz } from "../../src/streams/xyz";
+import { fromXyz, toXyz } from "../../src/streams/xyz";
 import { Readable } from "stream";
 import { text } from "stream/consumers";
 
-describe("ToXyz", () => {
+describe("toXyz", () => {
   test("converts data", async () => {
     const data = [
       { latitude: 1, longitude: 2, depth: 3, timestamp: new Date("2025-08-06T22:00:00.000Z") },
@@ -15,7 +15,7 @@ describe("ToXyz", () => {
         heading: 1.4,
       },
     ];
-    const result = await text(Readable.from(data).compose(new ToXyz()));
+    const result = await text(Readable.from(data).compose(toXyz()));
     expect(result).toEqual(
       [
         "LON,LAT,DEPTH,TIME,HEAD\n",

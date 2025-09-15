@@ -1,7 +1,7 @@
 import { join } from "path";
 import { Config } from "../config";
 import { ServerAPI } from "@signalk/server-api";
-import { createLiveStream, ToXyz, toPrecision } from "../streams";
+import { createLiveStream, toXyz, toPrecision } from "../streams";
 import { createWriteStream, existsSync, writeFileSync } from "fs";
 import { pipeline } from "stream/promises";
 import { getMetadata, getVesselInfo } from "../metadata";
@@ -31,7 +31,7 @@ export class FileSource implements BathymetrySource {
     return pipeline(
       createLiveStream(app, this.config),
       transform(toPrecision()),
-      new ToXyz({ header: !existsSync(dataFilename) }),
+      toXyz({ header: !existsSync(dataFilename) }),
       createWriteStream(dataFilename, { flags: "a" }),
       { signal: this.abortController.signal },
     );
