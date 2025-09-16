@@ -16,10 +16,14 @@ export function toXyz({ header = true }: { header?: boolean } = {}) {
     },
     transform(data: BathymetryData, encoding, callback) {
       const { latitude, longitude, depth, timestamp, heading } = data;
-      this.push(
-        [longitude, latitude, depth, timestamp.toISOString(), heading ?? ""].join(",") + "\n",
-      );
-      callback();
+      try {
+        this.push(
+          [longitude, latitude, depth, timestamp.toISOString(), heading ?? ""].join(",") + "\n",
+        );
+        callback();
+      } catch (err) {
+        return callback(err as Error);
+      }
     }
   })
 }

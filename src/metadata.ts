@@ -10,6 +10,8 @@ export type VesselInfo = {
   type?: string;
 };
 
+export type Metadata = ReturnType<typeof getMetadata>;
+
 export function getVesselInfo(app: ServerAPI): VesselInfo {
   return {
     // @ts-expect-error remove after next signalk release
