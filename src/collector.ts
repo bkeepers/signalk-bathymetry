@@ -1,21 +1,24 @@
 import { pipeline } from "stream/promises";
-import { createLiveStream, toPrecision, createSqliteWriter } from "./streams";
-import { join } from "path";
+import { createLiveStream, toPrecision } from "./streams";
 import { ServerAPI } from "@signalk/server-api";
 import { Config } from "./config";
 import { transform } from "stream-transform";
+import { BathymetrySource } from "./types";
 
-export default function createCollector() {
+export default function createCollector(app: ServerAPI, config: Config, source: BathymetrySource) {
   let abortController: AbortController | undefined = undefined;
 
   return {
-    start(app: ServerAPI, config: Config) {
+    async start() {
+      // Source is not writable, so nothing to do
+      if (!source.createWriter) return;
+
       abortController = new AbortController();
 
       return pipeline(
         createLiveStream(app, config),
         transform(toPrecision()),
-        createSqliteWriter(join(app.getDataDirPath(), `${config.uuid}.sqlite`)),
+        source.createWriter(),
         { signal: abortController.signal },
       );
     },

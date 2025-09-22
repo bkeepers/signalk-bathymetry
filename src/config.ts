@@ -25,7 +25,7 @@ export type Config = {
   anonymous: boolean;
 };
 
-const paths = ["belowSurface", "belowTransducer", "belowKeel"];
+export const DepthPaths = ["belowSurface", "belowTransducer", "belowKeel"];
 
 export function schema(app: ServerAPI) {
   return {
@@ -38,8 +38,8 @@ export function schema(app: ServerAPI) {
         type: "string",
         title: "Path",
         description: "The path to the depth data. (e.g. environment.depth.belowTransducer)",
-        enum: paths,
-        default: paths.find((path) => app.getSelfPath(`environment.depth.${path}.value`)),
+        enum: DepthPaths,
+        default: DepthPaths.find((path) => app.getSelfPath(`environment.depth.${path}.value`)),
       },
       sounder: {
         type: "object",

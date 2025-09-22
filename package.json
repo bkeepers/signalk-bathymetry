@@ -30,7 +30,8 @@
   },
   "bin": {
     "xyz-to-mbtiles": "bin/xyz-to-mbtiles",
-    "xyz-to-geojson": "bin/xyz-to-geojson"
+    "xyz-to-geojson": "bin/xyz-to-geojson",
+    "bathy": "dist/realcli.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

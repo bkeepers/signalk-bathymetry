@@ -1,9 +1,14 @@
 import { ServerAPI, Plugin } from "@signalk/server-api";
 import { schema, Config } from "./config";
 import createCollector from "./collector";
+import { createReporter } from "./reporters";
+import { createSqliteSource } from "./sources/sqlite";
+import { getVesselInfo } from "./metadata";
 
 export default function createPlugin(app: ServerAPI): Plugin {
-  let collector = createCollector();
+  // FIXME: types
+  let collector: ReturnType<typeof createCollector> | undefined = undefined;
+  let reporter: ReturnType<typeof createReporter> | undefined = undefined;
 
   return {
     id: "bathymetry",
@@ -11,7 +16,19 @@ export default function createPlugin(app: ServerAPI): Plugin {
     description: "collect and share bathymetry data",
 
     async start(config: Config) {
-      collector.start(app, config);
+      const source = createSqliteSource(app, config);
+      const vessel = getVesselInfo(app)
+
+      collector = createCollector(app, config, source);
+      reporter = createReporter(config, source, vessel, app);
+
+      collector.start().catch((err) => {
+        // TODO: what is the right behavior on collector error? Restart?
+        app.error("Bathymetry collector failed");
+        app.error(err);
+      });
+
+      reporter.start()
 
       // // FIXME: Once https://github.com/SignalK/signalk-server/pull/1970 is merged,
       // // check for history API and fall back to using FileSource.
@@ -24,7 +41,7 @@ export default function createPlugin(app: ServerAPI): Plugin {
     },
 
     stop() {
-      collector.stop();
+      collector?.stop();
     },
 
     schema() {
