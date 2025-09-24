@@ -20,7 +20,7 @@ export default function createPlugin(app: ServerAPI): Plugin {
       const vessel = getVesselInfo(app)
 
       collector = createCollector(app, config, source);
-      reporter = createReporter(config, source, vessel, app);
+      reporter = createReporter(config, vessel, app);
 
       collector.start().catch((err) => {
         // TODO: what is the right behavior on collector error? Restart?
