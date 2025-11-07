@@ -1,5 +1,10 @@
 import { describe, test, expect } from "vitest";
-import { NOAAReporter, getMetadata, Config, BathymetryData } from "../../src/index.js";
+import {
+  NOAAReporter,
+  getMetadata,
+  Config,
+  BathymetryData,
+} from "../../src/index.js";
 import { Readable } from "stream";
 import nock from "nock";
 import { config, vessel } from "../helper.js";
@@ -41,7 +46,9 @@ describe("submit", () => {
   ];
 
   test("success", async () => {
-    const scope = nock("https://example.com").post("/bathy").reply(200, SUCCESS_RESPONSE);
+    const scope = nock("https://example.com")
+      .post("/bathy")
+      .reply(200, SUCCESS_RESPONSE);
     const res = await reporter.submit(Readable.from(data), vessel, config);
     expect(res).toEqual(SUCCESS_RESPONSE);
     expect(scope.isDone()).toBe(true);
@@ -53,7 +60,9 @@ describe("submit", () => {
         this.emit("error", new Error("Stream error"));
       },
     });
-    await expect(reporter.submit(stream, vessel, config)).rejects.toThrowError("Stream error");
+    await expect(reporter.submit(stream, vessel, config)).rejects.toThrowError(
+      "Stream error",
+    );
   });
 
   test("unauthorized", async () => {
@@ -65,17 +74,17 @@ describe("submit", () => {
         message: "Forbidden",
         success: false,
       });
-    await expect(reporter.submit(Readable.from(data), vessel, config)).rejects.toThrowError(
-      "Unexpected status code 403 Forbidden",
-    );
+    await expect(
+      reporter.submit(Readable.from(data), vessel, config),
+    ).rejects.toThrowError("Unexpected status code 403 Forbidden");
     expect(scope.isDone()).toBe(true);
   });
 
   test("bad response", async () => {
     const scope = nock("https://example.com").post("/bathy").reply(500);
-    await expect(reporter.submit(Readable.from(data), vessel, config)).rejects.toThrowError(
-      "Unexpected status code 500 Internal Server Error",
-    );
+    await expect(
+      reporter.submit(Readable.from(data), vessel, config),
+    ).rejects.toThrowError("Unexpected status code 500 Internal Server Error");
     expect(scope.isDone()).toBe(true);
   });
 });

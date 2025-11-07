@@ -15,7 +15,10 @@ type BathymetryRow = {
   heading: number | null;
 };
 
-export function createSqliteSource(app: ServerAPI, config: Config): BathymetrySource {
+export function createSqliteSource(
+  app: ServerAPI,
+  config: Config,
+): BathymetrySource {
   const filename = process.env.VITEST
     ? ":memory:"
     : join(app.getDataDirPath(), `${config.uuid}.sqlite`);
@@ -29,7 +32,9 @@ export function createSqliteSource(app: ServerAPI, config: Config): BathymetrySo
       return createSqliteReader(db, options);
     },
     logReport({ from, to }) {
-      const stmt = db.prepare(`INSERT INTO reports(fromTimestamp, toTimestamp) VALUES(?, ?)`);
+      const stmt = db.prepare(
+        `INSERT INTO reports(fromTimestamp, toTimestamp) VALUES(?, ?)`,
+      );
       stmt.run(from.valueOf(), to.valueOf());
     },
     get lastReport() {
@@ -57,7 +62,10 @@ type QueryOptions = {
   to?: number;
 };
 
-export function createSqliteReader(db: Database.Database, options: SqliteReaderOptions = {}) {
+export function createSqliteReader(
+  db: Database.Database,
+  options: SqliteReaderOptions = {},
+) {
   const { batchSize = 1000, from = new Date(0), to = new Date() } = options;
 
   let offset = 0;
@@ -79,7 +87,12 @@ export function createSqliteReader(db: Database.Database, options: SqliteReaderO
       }
     },
     read() {
-      const rows = query.all({ limit: batchSize, offset, from: from.valueOf(), to: to.valueOf() });
+      const rows = query.all({
+        limit: batchSize,
+        offset,
+        from: from.valueOf(),
+        to: to.valueOf(),
+      });
 
       rows.forEach(({ id, timestamp, ...row }) => {
         this.push({ ...row, timestamp: new Date(timestamp) } as BathymetryData);

@@ -1,6 +1,11 @@
 import { ServerAPI } from "@signalk/server-api";
 
-export const vessel = { mmsi: "123456789", name: "Test Vessel", type: "Pleasure Craft", loa: 10 };
+export const vessel = {
+  mmsi: "123456789",
+  name: "Test Vessel",
+  type: "Pleasure Craft",
+  loa: 10,
+};
 
 export const config = {
   uuid: "1234",

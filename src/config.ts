@@ -37,9 +37,12 @@ export function schema(app: ServerAPI) {
       path: {
         type: "string",
         title: "Path",
-        description: "The path to the depth data. (e.g. environment.depth.belowTransducer)",
+        description:
+          "The path to the depth data. (e.g. environment.depth.belowTransducer)",
         enum: DepthPaths,
-        default: DepthPaths.find((path) => app.getSelfPath(`environment.depth.${path}.value`)),
+        default: DepthPaths.find((path) =>
+          app.getSelfPath(`environment.depth.${path}.value`),
+        ),
       },
       sounder: {
         type: "object",
@@ -61,7 +64,9 @@ export function schema(app: ServerAPI) {
           z: {
             type: "number",
             title: "Distance of the transducer below the waterline (meters)",
-            default: app.getSelfPath("environment.depth.surfaceToTransducer.value"),
+            default: app.getSelfPath(
+              "environment.depth.surfaceToTransducer.value",
+            ),
           },
           draft: {
             type: "number",
@@ -115,7 +120,8 @@ export function schema(app: ServerAPI) {
           make: {
             type: "string",
             title: "Make",
-            description: "The manufacturer of the GPS receiver. (e.g. Kongsberg Maritime)",
+            description:
+              "The manufacturer of the GPS receiver. (e.g. Kongsberg Maritime)",
           },
           model: {
             type: "string",
@@ -128,7 +134,8 @@ export function schema(app: ServerAPI) {
         type: "boolean",
         default: false,
         title: "Share data anonymously",
-        description: "A unique UUID will be used in place of your MMSI and vessel name. ",
+        description:
+          "A unique UUID will be used in place of your MMSI and vessel name. ",
       },
       uuid: {
         type: "string",

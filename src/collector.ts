@@ -5,7 +5,11 @@ import { Config } from "./config";
 import { transform } from "stream-transform";
 import { BathymetrySource } from "./types";
 
-export function createCollector(app: ServerAPI, config: Config, source: BathymetrySource) {
+export function createCollector(
+  app: ServerAPI,
+  config: Config,
+  source: BathymetrySource,
+) {
   let abortController: AbortController | undefined = undefined;
 
   return {

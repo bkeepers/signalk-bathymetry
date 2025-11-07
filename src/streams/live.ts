@@ -38,7 +38,8 @@ export function createLiveStream(app: ServerAPI, config: Config) {
                 if (!value) return;
                 const depth = (value as number) + offset;
 
-                if (!position) return app.debug("No position data, ignoring depth data");
+                if (!position)
+                  return app.debug("No position data, ignoring depth data");
                 if (isStale(position, timestamp, ttl))
                   return app.debug("Stale position data, ignoring depth data");
 
@@ -76,5 +77,8 @@ export function createLiveStream(app: ServerAPI, config: Config) {
 }
 
 function isStale(object: { timestamp: string }, timestamp: Date, ttl: number) {
-  return !object?.timestamp || new Date(object.timestamp).valueOf() < timestamp.valueOf() - ttl;
+  return (
+    !object?.timestamp ||
+    new Date(object.timestamp).valueOf() < timestamp.valueOf() - ttl
+  );
 }

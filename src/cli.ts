@@ -10,9 +10,16 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
-const { configuration } = JSON.parse(readFileSync(join(homedir(), ".signalk", "plugin-config-data", "bathymetry.json")).toString());
+const { configuration } = JSON.parse(
+  readFileSync(
+    join(homedir(), ".signalk", "plugin-config-data", "bathymetry.json"),
+  ).toString(),
+);
 
-export async function xyzToGeoJSON({ input = process.stdin, output = process.stdout } = {}) {
+export async function xyzToGeoJSON({
+  input = process.stdin,
+  output = process.stdout,
+} = {}) {
   return pipeline(
     input,
     fromXyz(),
@@ -25,7 +32,10 @@ export async function xyzToGeoJSON({ input = process.stdin, output = process.std
   );
 }
 
-export async function xyzToGpx({ input = process.stdin, output = process.stdout } = {}) {
+export async function xyzToGpx({
+  input = process.stdin,
+  output = process.stdout,
+} = {}) {
   return pipeline(
     input,
     fromXyz(),
