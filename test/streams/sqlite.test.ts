@@ -13,7 +13,12 @@ const data = [
     heading: 0,
   },
   // without heading
-  { latitude: 4, longitude: 5, depth: 6, timestamp: new Date("2025-08-06T23:00:00.000Z") },
+  {
+    latitude: 4,
+    longitude: 5,
+    depth: 6,
+    timestamp: new Date("2025-08-06T23:00:00.000Z"),
+  },
   // undefined heading
   {
     latitude: 4,
@@ -29,7 +34,10 @@ test("reading and writing to sqlite", async () => {
   const writer = source.createWriter!();
   await pipeline(Readable.from(data), writer);
 
-  const reader = await source.createReader({ from: new Date(0), to: new Date() });
+  const reader = await source.createReader({
+    from: new Date(0),
+    to: new Date(),
+  });
   const result = await reader.toArray();
   expect(result.length).toBe(data.length);
   expect(result[0]).toEqual(data[0]);

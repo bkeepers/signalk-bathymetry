@@ -1,4 +1,4 @@
-import { Transform, TransformCallback, TransformOptions } from "stream";
+import { Transform } from "stream";
 import { BathymetryData } from "../types";
 import { parse } from "csv-parse";
 
@@ -6,7 +6,10 @@ import { parse } from "csv-parse";
  * Converts BathymetryData to XYZ format.
  * https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/GuidanceforSubmittingCSBDataToTheIHODCDB%20%281%29.pdf
  */
-export function toXyz({ header = true, includeHeading = true }: { header?: boolean, includeHeading?: boolean } = {}) {
+export function toXyz({
+  header = true,
+  includeHeading = true,
+}: { header?: boolean; includeHeading?: boolean } = {}) {
   return new Transform({
     readableObjectMode: false,
     writableObjectMode: true,
@@ -16,7 +19,7 @@ export function toXyz({ header = true, includeHeading = true }: { header?: boole
         if (includeHeading) fields.push("HEAD");
         this.push(fields.join(",") + "\n");
       }
-      callback()
+      callback();
     },
     transform(data: BathymetryData, encoding, callback) {
       const { latitude, longitude, depth, timestamp, heading } = data;
@@ -28,8 +31,8 @@ export function toXyz({ header = true, includeHeading = true }: { header?: boole
       } catch (err) {
         return callback(err as Error);
       }
-    }
-  })
+    },
+  });
 }
 
 const XyzToBathymetry = {

@@ -26,7 +26,11 @@ export function padExtent({ x, y }: Extent, padding: number): Extent {
   };
 }
 
-function minmax(candidate: number | undefined | null, min: number, max: number): [number, number] {
+function minmax(
+  candidate: number | undefined | null,
+  min: number,
+  max: number,
+): [number, number] {
   if (typeof candidate !== "number") return [min, max];
   return [Math.min(min, candidate), Math.max(max, candidate)];
 }

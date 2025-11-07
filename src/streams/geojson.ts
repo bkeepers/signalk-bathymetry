@@ -13,7 +13,11 @@ export class ToGeoJSON extends Transform {
     });
   }
 
-  _transform(data: BathymetryData, encoding: string, callback: (error?: Error | null) => void) {
+  _transform(
+    data: BathymetryData,
+    encoding: string,
+    callback: (error?: Error | null) => void,
+  ) {
     this.push(this.started ? "," : '{"type": "FeatureCollection","features":[');
     this.started = true;
     this.push(JSON.stringify(toFeature(data)));

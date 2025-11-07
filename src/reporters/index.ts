@@ -24,8 +24,13 @@ export function createReporter(
   const service = new NOAAReporter();
   const job = new CronJob(schedule, report);
 
-  async function report({ from = source.lastReport ?? new Date(0), to = new Date() } = {}) {
-    app.debug(`Generating report from ${from.toISOString()} to ${to.toISOString()}`);
+  async function report({
+    from = source.lastReport ?? new Date(0),
+    to = new Date(),
+  } = {}) {
+    app.debug(
+      `Generating report from ${from.toISOString()} to ${to.toISOString()}`,
+    );
     try {
       const data = await source.createReader({ from, to });
       await submit(data);
@@ -35,7 +40,9 @@ export function createReporter(
     } catch (err) {
       console.error(err);
       app.error(`Failed to generate or submit report: ${err}`);
-      app.setPluginStatus(`Failed to report at ${to.toISOString()}: ${(err as Error).message}`);
+      app.setPluginStatus(
+        `Failed to report at ${to.toISOString()}: ${(err as Error).message}`,
+      );
       return;
     }
   }

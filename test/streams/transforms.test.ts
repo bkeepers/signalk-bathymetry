@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { correctForSensorPosition, getOffsets } from "../../src/streams/transforms";
+import {
+  correctForSensorPosition,
+  getOffsets,
+} from "../../src/streams/transforms";
 import { getDistance } from "geolib";
 
 describe("getOffsets", () => {
@@ -18,13 +21,23 @@ describe("getOffsets", () => {
   test("sounder forward", () => {
     const gnss = { x: 0, y: 2 };
     const sounder = { x: 0, y: 1 };
-    expect(getOffsets({ gnss, sounder })).toEqual({ distance: 1, bearing: 0, dx: 0, dy: 1 });
+    expect(getOffsets({ gnss, sounder })).toEqual({
+      distance: 1,
+      bearing: 0,
+      dx: 0,
+      dy: 1,
+    });
   });
 
   test("sounder aft", () => {
     const gnss = { x: 0, y: 1 };
     const sounder = { x: 0, y: 2 };
-    expect(getOffsets({ gnss, sounder })).toEqual({ distance: 1, bearing: 180, dx: 0, dy: -1 });
+    expect(getOffsets({ gnss, sounder })).toEqual({
+      distance: 1,
+      bearing: 180,
+      dx: 0,
+      dy: -1,
+    });
   });
 
   test("sounder aft and port of gnss", () => {

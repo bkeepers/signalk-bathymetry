@@ -9,8 +9,10 @@ import pkg from "../../package.json";
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 
-const TOKEN = process.env.NOAA_CSB_TOKEN ?? 'test';
-const NOAA_CSB_URL = process.env.NOAA_CSB_URL ?? "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
+const TOKEN = process.env.NOAA_CSB_TOKEN ?? "test";
+const NOAA_CSB_URL =
+  process.env.NOAA_CSB_URL ??
+  "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
 
 // https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
 export interface NOAAReporterOptions {
@@ -28,19 +30,20 @@ export class NOAAReporter {
   }
 
   correctors(config: Config) {
-    return chain([
-      correctForSensorPosition(config),
-      toPrecision()
-    ]);
+    return chain([correctForSensorPosition(config), toPrecision()]);
   }
 
-  async submit(data: Readable, vessel: VesselInfo, config: Config): Promise<IncomingMessage> {
+  async submit(
+    data: Readable,
+    vessel: VesselInfo,
+    config: Config,
+  ): Promise<IncomingMessage> {
     const metadata: Metadata = getMetadata(vessel, config);
 
     return new Promise<IncomingMessage>((resolve, reject) => {
       // Using external form-data package to support streaming
-      const form = new StreamFormData()
-      form.on('error', reject);
+      const form = new StreamFormData();
+      form.on("error", reject);
 
       const file = chain([
         data,
@@ -48,19 +51,19 @@ export class NOAAReporter {
         toXyz({ includeHeading: false }),
       ]);
 
-      const prefix = `${config.uuid}-${new Date().toISOString()}`
-      form.append('metadataInput', JSON.stringify(metadata), {
-        contentType: 'application/json',
-        filename: `${prefix}.json`
+      const prefix = `${config.uuid}-${new Date().toISOString()}`;
+      form.append("metadataInput", JSON.stringify(metadata), {
+        contentType: "application/json",
+        filename: `${prefix}.json`,
       });
-      form.append('file', file, {
-        contentType: 'application/csv',
-        filename: `${prefix}.csv`
+      form.append("file", file, {
+        contentType: "application/csv",
+        filename: `${prefix}.csv`,
       });
 
-      const url = new URL(this.url)
+      const url = new URL(this.url);
 
-      console.log("Submitting to", url.href)
+      console.log("Submitting to", url.href);
 
       const params: SubmitOptions = {
         protocol: "https:",
@@ -69,18 +72,22 @@ export class NOAAReporter {
         port: url.port,
         method: "POST",
         headers: {
-          "x-auth-token": this.token
-        }
-      }
+          "x-auth-token": this.token,
+        },
+      };
 
       form.submit(params, async (err, res) => {
         if (err) {
           form.destroy(err);
-          return reject(err)
+          return reject(err);
         }
 
         if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
-          return reject(new Error(`Unexpected status code ${res.statusCode} ${res.statusMessage}`))
+          return reject(
+            new Error(
+              `Unexpected status code ${res.statusCode} ${res.statusMessage}`,
+            ),
+          );
         }
 
         // Drain the response
@@ -88,8 +95,8 @@ export class NOAAReporter {
         const body = JSON.parse(await text(res));
 
         resolve(body);
-      })
-    })
+      });
+    });
   }
 }
 
@@ -118,18 +125,22 @@ export function getMetadata(info: VesselInfo, config: Config) {
       ...(config.anonymous
         ? {}
         : {
-          type: info.type,
-          name: info.name,
-          length: info.loa,
-          IDType: info.mmsi ? "MMSI" : info.imo ? "IMO" : undefined,
-          IDNumber: info.mmsi ?? info.imo,
-        }),
+            type: info.type,
+            name: info.name,
+            length: info.loa,
+            IDType: info.mmsi ? "MMSI" : info.imo ? "IMO" : undefined,
+            IDNumber: info.mmsi ?? info.imo,
+          }),
       sensors: [
         {
           type: "Sounder",
           make: config.sounder?.make,
           model: config.sounder?.model,
-          position: [config.sounder?.x ?? 0, config.sounder?.y ?? 0, config.sounder?.z ?? 0],
+          position: [
+            config.sounder?.x ?? 0,
+            config.sounder?.y ?? 0,
+            config.sounder?.z ?? 0,
+          ],
           draft: config.sounder?.draft,
           frequency: config.sounder?.frequency,
           transducer: config.sounder?.transducer,
@@ -138,12 +149,16 @@ export function getMetadata(info: VesselInfo, config: Config) {
           type: "GNSS",
           make: config.gnss?.make,
           model: config.gnss?.model,
-          position: [config.gnss?.x ?? 0, config.gnss?.y ?? 0, config.gnss?.z ?? 0],
+          position: [
+            config.gnss?.x ?? 0,
+            config.gnss?.y ?? 0,
+            config.gnss?.z ?? 0,
+          ],
         },
       ],
       correctors: {
         positionReferencePoint: "Transducer",
-        draftApplied: true
+        draftApplied: true,
         // "positionOffsetsDocumented": true,
         // "soundSpeedDocumented": true,
         // "dataProcessed": true,

@@ -1,6 +1,6 @@
 export default {
-  uuid: '1',
-  path: 'depthBelowService',
+  uuid: "1",
+  path: "depthBelowService",
   sounder: {
     x: 0,
     y: 0,
@@ -12,4 +12,4 @@ export default {
     z: 0,
   },
   anonymous: false,
-}
+};
