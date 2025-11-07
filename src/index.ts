@@ -2,7 +2,6 @@ export * from "./sources";
 export * from "./streams";
 export * from "./types";
 export * from "./config";
-export * from "./renderer";
 export * from "./metadata";
 export * from "./reporters";
 

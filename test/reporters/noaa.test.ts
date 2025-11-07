@@ -5,6 +5,13 @@ import nock from 'nock'
 
 nock.disableNetConnect();
 
+// This is a real response from NOAA for a valid submission
+const SUCCESS_RESPONSE = {
+  "success": true,
+  "message": "Submission successful.",
+  "submissionIds": ["60ba2ee8-04ee-45e4-b723-d54ee031ea47"]
+}
+
 describe('submit', () => {
   const reporter = new NOAAReporter({
     token: "test",
@@ -21,15 +28,21 @@ describe('submit', () => {
   ]
 
   test('success', async () => {
-    const scope = nock('https://example.com').post('/bathy').reply(200)
+    const scope = nock('https://example.com').post('/bathy').reply(200, SUCCESS_RESPONSE)
     const res = await reporter.submit(Readable.from(data), vessel, config)
-    expect(res.statusCode).toBe(200)
+    expect(res).toEqual(SUCCESS_RESPONSE)
     expect(scope.isDone()).toBe(true)
   })
 
   test('bad stream', async () => {
     const stream = new Readable({ read() { this.emit('error', new Error("Stream error")) } })
     await expect(reporter.submit(stream, vessel, config)).rejects.toThrowError("Stream error");
+  })
+
+  test('unauthorized', async () => {
+    const scope = nock('https://example.com').post('/bathy').reply(403, { "formErrors": ["Forbidden"], "fieldErrors": {}, "message": "Forbidden", "success": false })
+    await expect(reporter.submit(Readable.from(data), vessel, config)).rejects.toThrowError("Unexpected status code 403 Forbidden");
+    expect(scope.isDone()).toBe(true)
   })
 
   test('bad response', async () => {

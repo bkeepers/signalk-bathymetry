@@ -4,17 +4,18 @@ import { Readable } from "stream";
 import { text } from "stream/consumers";
 
 describe("toXyz", () => {
+  const data = [
+    { latitude: 1, longitude: 2, depth: 3, timestamp: new Date("2025-08-06T22:00:00.000Z") },
+    {
+      latitude: 4,
+      longitude: 5,
+      depth: 6,
+      timestamp: new Date("2025-08-06T23:00:00.000Z"),
+      heading: 1.4,
+    },
+  ];
+
   test("converts data", async () => {
-    const data = [
-      { latitude: 1, longitude: 2, depth: 3, timestamp: new Date("2025-08-06T22:00:00.000Z") },
-      {
-        latitude: 4,
-        longitude: 5,
-        depth: 6,
-        timestamp: new Date("2025-08-06T23:00:00.000Z"),
-        heading: 1.4,
-      },
-    ];
     const result = await text(Readable.from(data).compose(toXyz()));
     expect(result).toEqual(
       [
@@ -23,6 +24,18 @@ describe("toXyz", () => {
         "5,4,6,2025-08-06T23:00:00.000Z,1.4\n",
       ].join(""),
     );
+  });
+
+  test("without heading", async () => {
+    const result = await text(Readable.from(data).compose(toXyz({ includeHeading: false })));
+    expect(result).toEqual(
+      [
+        "LON,LAT,DEPTH,TIME\n",
+        "2,1,3,2025-08-06T22:00:00.000Z\n",
+        "5,4,6,2025-08-06T23:00:00.000Z\n",
+      ].join(""),
+    );
+
   });
 });
 

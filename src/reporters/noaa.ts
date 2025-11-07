@@ -1,15 +1,16 @@
 import StreamFormData, { type SubmitOptions } from "form-data";
 import { toXyz } from "../streams/xyz.js";
-import { pipeline } from "stream";
+import { text } from "stream/consumers";
 import type { VesselInfo } from "../metadata.js";
 import type { Readable } from "stream";
 import type { IncomingMessage } from "http";
 import { Config } from "../config.js";
 import pkg from "../../package.json";
+import { correctForSensorPosition, toPrecision } from "../streams/index.js";
+import chain from "stream-chain";
 
 const TOKEN = process.env.NOAA_CSB_TOKEN ?? 'test';
-// const NOAA_CSB_URL = process.env.NOAA_CSB_URL ?? "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
-const NOAA_CSB_URL = process.env.NOAA_CSB_URL ?? "https://www.postb.in/b/1758042482505-0609646309167";
+const NOAA_CSB_URL = process.env.NOAA_CSB_URL ?? "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
 
 // https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
 export interface NOAAReporterOptions {
@@ -26,6 +27,13 @@ export class NOAAReporter {
     this.url = url;
   }
 
+  correctors(config: Config) {
+    return chain([
+      correctForSensorPosition(config),
+      toPrecision()
+    ]);
+  }
+
   async submit(data: Readable, vessel: VesselInfo, config: Config): Promise<IncomingMessage> {
     const metadata: Metadata = getMetadata(vessel, config);
 
@@ -34,17 +42,26 @@ export class NOAAReporter {
       const form = new StreamFormData()
       form.on('error', reject);
 
-      // Pipe data through toXyz transform
-      const file = pipeline(
+      const file = chain([
         data,
-        toXyz(),
-        (err) => err && reject(err)
-      );
+        this.correctors(config),
+        toXyz({ includeHeading: false }),
+      ]);
 
-      form.append('metadataInput', JSON.stringify(metadata), { contentType: 'application/json' });
-      form.append('file', file, { contentType: 'application/csv' });
+      const prefix = `${config.uuid}-${new Date().toISOString()}`
+      form.append('metadataInput', JSON.stringify(metadata), {
+        contentType: 'application/json',
+        filename: `${prefix}.json`
+      });
+      form.append('file', file, {
+        contentType: 'application/csv',
+        filename: `${prefix}.csv`
+      });
 
       const url = new URL(this.url)
+
+      console.log("Submitting to", url.href)
+
       const params: SubmitOptions = {
         protocol: "https:",
         host: url.hostname,
@@ -56,13 +73,21 @@ export class NOAAReporter {
         }
       }
 
-      form.submit(params, (err, res) => {
-        if (err) return reject(err)
+      form.submit(params, async (err, res) => {
+        if (err) {
+          form.destroy(err);
+          return reject(err)
+        }
 
         if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
           return reject(new Error(`Unexpected status code ${res.statusCode} ${res.statusMessage}`))
         }
-        resolve(res);
+
+        // Drain the response
+        res.resume();
+        const body = JSON.parse(await text(res));
+
+        resolve(body);
       })
     })
   }
@@ -117,12 +142,12 @@ export function getMetadata(info: VesselInfo, config: Config) {
         },
       ],
       correctors: {
-        positionReferencePoint: "GNSS",
-        // "soundSpeedDocumented": true,
+        positionReferencePoint: "Transducer",
+        draftApplied: true
         // "positionOffsetsDocumented": true,
+        // "soundSpeedDocumented": true,
         // "dataProcessed": true,
         // "motionOffsetsApplied": true,
-        // "draftApplied": true
       },
     },
   };

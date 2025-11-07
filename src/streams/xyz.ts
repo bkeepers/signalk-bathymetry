@@ -6,20 +6,24 @@ import { parse } from "csv-parse";
  * Converts BathymetryData to XYZ format.
  * https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/GuidanceforSubmittingCSBDataToTheIHODCDB%20%281%29.pdf
  */
-export function toXyz({ header = true }: { header?: boolean } = {}) {
+export function toXyz({ header = true, includeHeading = true }: { header?: boolean, includeHeading?: boolean } = {}) {
   return new Transform({
     readableObjectMode: false,
     writableObjectMode: true,
     construct(callback) {
-      if (header) this.push("LON,LAT,DEPTH,TIME,HEAD\n");
+      if (header) {
+        const fields = ["LON", "LAT", "DEPTH", "TIME"];
+        if (includeHeading) fields.push("HEAD");
+        this.push(fields.join(",") + "\n");
+      }
       callback()
     },
     transform(data: BathymetryData, encoding, callback) {
       const { latitude, longitude, depth, timestamp, heading } = data;
       try {
-        this.push(
-          [longitude, latitude, depth, timestamp.toISOString(), heading ?? ""].join(",") + "\n",
-        );
+        const fields = [longitude, latitude, depth, timestamp.toISOString()];
+        if (includeHeading) fields.push(heading ?? "");
+        this.push(fields.join(",") + "\n");
         callback();
       } catch (err) {
         return callback(err as Error);

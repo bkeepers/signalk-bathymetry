@@ -121,13 +121,13 @@ export function createDB(filename: string | Database.Database) {
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS bathymetry(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        longitude REAL NOT NULL,
-        latitude REAL NOT NULL,
-        depth REAL NOT NULL,
-        timestamp INTEGER NOT NULL,
-        heading REAL
-      );
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      longitude REAL NOT NULL,
+      latitude REAL NOT NULL,
+      depth REAL NOT NULL,
+      timestamp INTEGER NOT NULL,
+      heading REAL
+    );
 
     CREATE INDEX IF NOT EXISTS idx_bathymetry_timestamp ON bathymetry(timestamp);
     CREATE INDEX IF NOT EXISTS idx_bathymetry_location ON bathymetry(latitude, longitude);

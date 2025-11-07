@@ -1,63 +1,63 @@
 import { NOAAReporter } from "./noaa";
 import { Config } from "../config";
 import { ServerAPI } from "@signalk/server-api";
-import { BathymetrySource, Timeframe } from "../types";
 import { CronJob } from 'cron';
-import transform from "stream-transform";
-import { correctForSensorPosition, toPrecision } from "../streams";
 import { VesselInfo } from "../metadata";
-import createDebug, { Debugger } from "debug";
+import { Readable } from "stream";
+import { BathymetrySource } from "../types";
+import { createReportLog } from "./log";
 
 export * from "./noaa";
 
-export interface ReportOptions {
-  debug?: ServerAPI["debug"]
+export interface ReporterOptions {
+  schedule?: string; // cron schedule string
 }
 
+const DEFAULT_SCHEDULE = process.env.BATHY_REPORT_SCHEDULE ?? '0 0 * * *'; // every day at midnight
+
 export function createReporter(
+  app: ServerAPI,
   config: Config,
-  source: BathymetrySource,
   vessel: VesselInfo,
-  { debug = createDebug('signalk-bathymetry') }: ReportOptions = {}
+  source: BathymetrySource,
+  { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {}
 ) {
-  const service = new NOAAReporter()
+  const service = new NOAAReporter();
+  const job = new CronJob(schedule, report);
+  const reportLog = createReportLog();
 
-  // TODO: persist this
-  let lastReport: Date = new Date(0);
-
-  async function submit({ from, to }: Timeframe = { from: lastReport ?? new Date(0), to: new Date() }) {
-    debug(`Reporting data from ${vessel.name} (${vessel.mmsi}) from ${from.toISOString()} to ${to.toISOString()}`)
-
-    // TODO: iterate over timeframes (daily?) to avoid too much data at once
-
-    const data = (await source.createReader({ from, to }))
-      .compose(transform(correctForSensorPosition(config)))
-      .compose(transform(toPrecision()));
-
-    await service.submit(data, vessel, config);
-    lastReport = to;
+  async function report({ from = reportLog.lastReport, to = new Date() } = {}) {
+    app.debug(`Generating report from ${from.toISOString()} to ${to.toISOString()}`);
+    try {
+      const data = await source.createReader({ from, to })
+      await submit(data);
+      app.debug('Report submitted successfully');
+      app.setPluginStatus(`Reported at ${to.toISOString()}`);
+      reportLog.report(to);
+    } catch (err) {
+      console.error(err);
+      app.error(`Failed to generate or submit report: ${err}`);
+      app.setPluginStatus(`Failed to report at ${to.toISOString()}: ${(err as Error).message}`);
+      return;
+    }
   }
 
-  const job = new CronJob(
-    // '0 0 * * *', // cronTime: every day at midnight
-    '*/1 * * * *', // cronTime: every minute for testing
-    submit,
-    null, // onComplete
-    false, // start
-  );
+  async function submit(data: Readable) {
+    app.debug(`Reporting data from ${vessel.name} (${vessel.mmsi})`)
+    await service.submit(data, vessel, config);
+  }
 
   return {
     start() {
       job.start();
+      app.debug(`Starting reporter with schedule: ${schedule}`);
+      app.debug(`Next report at ${job.nextDate()}`);
+      app.setPluginStatus(`Next report at ${job.nextDate()}`);
     },
     stop() {
+      app.debug(`Stopping reporter`);
       job.stop();
     },
     submit,
   }
-}
-
-
-export function createScheduler() {
-
 }
