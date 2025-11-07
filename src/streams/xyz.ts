@@ -6,24 +6,30 @@ import { parse } from "csv-parse";
  * Converts BathymetryData to XYZ format.
  * https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/GuidanceforSubmittingCSBDataToTheIHODCDB%20%281%29.pdf
  */
-export class ToXyz extends Transform {
-  constructor({ header = true, ...options }: TransformOptions & { header?: boolean } = {}) {
-    super({
-      ...options,
-      readableObjectMode: false,
-      writableObjectMode: true,
-    });
-
-    if (header) this.push("LON,LAT,DEPTH,TIME,HEAD\n");
-  }
-
-  _transform(data: BathymetryData, encoding: string, callback: TransformCallback) {
-    const { latitude, longitude, depth, timestamp, heading } = data;
-    this.push(
-      [longitude, latitude, depth, timestamp.toISOString(), heading ?? ""].join(",") + "\n",
-    );
-    callback();
-  }
+export function toXyz({ header = true, includeHeading = true }: { header?: boolean, includeHeading?: boolean } = {}) {
+  return new Transform({
+    readableObjectMode: false,
+    writableObjectMode: true,
+    construct(callback) {
+      if (header) {
+        const fields = ["LON", "LAT", "DEPTH", "TIME"];
+        if (includeHeading) fields.push("HEAD");
+        this.push(fields.join(",") + "\n");
+      }
+      callback()
+    },
+    transform(data: BathymetryData, encoding, callback) {
+      const { latitude, longitude, depth, timestamp, heading } = data;
+      try {
+        const fields = [longitude, latitude, depth, timestamp.toISOString()];
+        if (includeHeading) fields.push(heading ?? "");
+        this.push(fields.join(",") + "\n");
+        callback();
+      } catch (err) {
+        return callback(err as Error);
+      }
+    }
+  })
 }
 
 const XyzToBathymetry = {
@@ -37,6 +43,9 @@ const XyzToBathymetry = {
 export function fromXyz() {
   return parse({
     cast_date: true,
+    skip_empty_lines: true,
+    skip_records_with_empty_values: true,
+    skip_records_with_error: true,
     columns(header: (keyof typeof XyzToBathymetry)[]) {
       return header.map((key) => XyzToBathymetry[key] || key);
     },

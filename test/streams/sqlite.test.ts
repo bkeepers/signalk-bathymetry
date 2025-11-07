@@ -1,0 +1,63 @@
+import { expect, test } from "vitest";
+import { createSqliteSource } from "../../src/sources/sqlite";
+import { Readable } from "stream";
+import { pipeline } from "stream/promises";
+import { app, config } from "../helper";
+
+const data = [
+  {
+    latitude: 1,
+    longitude: 2,
+    depth: 3,
+    timestamp: new Date("2025-08-06T22:00:00.000Z"),
+    heading: 0,
+  },
+  // without heading
+  { latitude: 4, longitude: 5, depth: 6, timestamp: new Date("2025-08-06T23:00:00.000Z") },
+  // undefined heading
+  {
+    latitude: 4,
+    longitude: 5,
+    depth: 6,
+    timestamp: new Date("2025-08-06T24:00:00.000Z"),
+    heading: undefined,
+  },
+];
+
+test("reading and writing to sqlite", async () => {
+  const source = createSqliteSource(app, config);
+  const writer = source.createWriter!();
+  await pipeline(Readable.from(data), writer);
+
+  const reader = await source.createReader({ from: new Date(0), to: new Date() });
+  const result = await reader.toArray();
+  expect(result.length).toBe(data.length);
+  expect(result[0]).toEqual(data[0]);
+  expect(result[1]).toEqual({ ...data[1], heading: null });
+  expect(result[2]).toEqual({ ...data[2], heading: null });
+});
+
+test("reading with from and to", async () => {
+  const source = createSqliteSource(app, config);
+  const writer = source.createWriter!();
+  await pipeline(Readable.from(data), writer);
+
+  const reader = await source.createReader({
+    from: new Date("2025-08-06T22:30:00.000Z"),
+    to: new Date("2025-08-06T23:30:00.000Z"),
+  });
+
+  const result = await reader.toArray();
+  expect(result.length).toBe(1);
+  expect(result[0].timestamp).toEqual(data[1].timestamp);
+});
+
+test("logReport", async () => {
+  const source = createSqliteSource(app, config);
+  const from = new Date("2025-08-06T22:00:00.000Z");
+  const to = new Date("2025-08-06T23:00:00.000Z");
+
+  expect(source.lastReport).toBeUndefined();
+  source.logReport!({ from, to });
+  expect(source.lastReport).toEqual(to);
+});

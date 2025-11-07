@@ -29,19 +29,21 @@
     "prepare": "npm run build"
   },
   "bin": {
-    "xyz-to-mbtiles": "bin/xyz-to-mbtiles",
-    "xyz-to-geojson": "bin/xyz-to-geojson"
+    "xyz-to-geojson": "bin/xyz-to-geojson",
+    "bathy-report": "dist/cli/report.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
     "@mapbox/mbview": "^5.1.0",
     "@signalk/server-api": "^2.7.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/debug": "^4.1.12",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.15.12",
     "@types/stream-json": "^1.7.8",
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.5",
+    "nock": "^14.0.10",
     "prettier": "^3.5.3",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
@@ -49,9 +51,12 @@
     "vitest": "^3.1.3"
   },
   "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "cron": "^4.3.3",
     "csv-parse": "^5.6.0",
     "debug": "^4.4.0",
     "execa": "^9.5.3",
+    "form-data": "^4.0.4",
     "geojson": "^0.5.0",
     "geolib": "^3.3.4",
     "p-map": "^7.0.3",

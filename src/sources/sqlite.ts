@@ -1,0 +1,162 @@
+import Database from "better-sqlite3";
+import { BathymetryData, BathymetrySource } from "../types.js";
+import { Readable, Writable } from "stream";
+import { ServerAPI } from "@signalk/server-api";
+import { Config } from "../config.js";
+import { join } from "path";
+import { runMigrations } from "./sqlite/migrations.js";
+
+type BathymetryRow = {
+  id: number;
+  longitude: number;
+  latitude: number;
+  depth: number;
+  timestamp: number;
+  heading: number | null;
+};
+
+export function createSqliteSource(app: ServerAPI, config: Config): BathymetrySource {
+  const filename = process.env.VITEST
+    ? ":memory:"
+    : join(app.getDataDirPath(), `${config.uuid}.sqlite`);
+
+  app.debug(`Creating SQLite source: ${filename}`);
+  const db = createDB(filename);
+
+  return {
+    createWriter: () => createSqliteWriter(db),
+    createReader(options) {
+      return createSqliteReader(db, options);
+    },
+    logReport({ from, to }) {
+      const stmt = db.prepare(`INSERT INTO reports(fromTimestamp, toTimestamp) VALUES(?, ?)`);
+      stmt.run(from.valueOf(), to.valueOf());
+    },
+    get lastReport() {
+      const row = db
+        .prepare<
+          [],
+          { toTimestamp: number }
+        >(`SELECT toTimestamp FROM reports ORDER BY toTimestamp DESC LIMIT 1`)
+        .get();
+      return row ? new Date(row.toTimestamp) : undefined;
+    },
+  };
+}
+
+export interface SqliteReaderOptions {
+  batchSize?: number;
+  from?: Date;
+  to?: Date;
+}
+
+type QueryOptions = {
+  limit: number;
+  offset: number;
+  from?: number;
+  to?: number;
+};
+
+export function createSqliteReader(db: Database.Database, options: SqliteReaderOptions = {}) {
+  const { batchSize = 1000, from = new Date(0), to = new Date() } = options;
+
+  let offset = 0;
+  let query: Database.Statement<QueryOptions, BathymetryRow>;
+
+  return new Readable({
+    objectMode: true,
+    construct(callback) {
+      try {
+        query = db.prepare(`
+          SELECT * FROM bathymetry
+          WHERE timestamp >= :from AND timestamp <= :to
+          ORDER BY timestamp
+          LIMIT :limit OFFSET :offset
+        `);
+        callback();
+      } catch (err) {
+        callback(err as Error);
+      }
+    },
+    read() {
+      const rows = query.all({ limit: batchSize, offset, from: from.valueOf(), to: to.valueOf() });
+
+      rows.forEach(({ id, timestamp, ...row }) => {
+        this.push({ ...row, timestamp: new Date(timestamp) } as BathymetryData);
+      });
+
+      offset += rows.length;
+
+      if (rows.length < batchSize) this.push(null);
+    },
+  });
+}
+
+export function createSqliteWriter(db: Database.Database) {
+  let stmt: Database.Statement<Omit<BathymetryRow, "id">>;
+
+  return new Writable({
+    objectMode: true,
+    construct(callback) {
+      try {
+        stmt = db.prepare(`
+          INSERT INTO bathymetry(longitude, latitude, depth, timestamp, heading)
+          VALUES(:longitude, :latitude, :depth, :timestamp, :heading)
+        `);
+
+        callback();
+      } catch (err) {
+        callback(err as Error);
+      }
+    },
+
+    write(data: BathymetryData, encoding, callback) {
+      try {
+        stmt.run({
+          longitude: data.longitude,
+          latitude: data.latitude,
+          depth: data.depth,
+          timestamp: data.timestamp.valueOf(),
+          heading: data.heading ?? null,
+        });
+        callback();
+      } catch (err) {
+        callback(err as Error);
+      }
+    },
+  });
+}
+
+export function createDB(filename: string) {
+  const db = new Database(filename);
+  db.pragma("journal_mode = WAL");
+
+  runMigrations(db, [
+    () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS bathymetry(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          longitude REAL NOT NULL,
+          latitude REAL NOT NULL,
+          depth REAL NOT NULL,
+          timestamp INTEGER NOT NULL,
+          heading REAL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_bathymetry_timestamp ON bathymetry(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_bathymetry_location ON bathymetry(latitude, longitude);
+      `);
+    },
+    () => {
+      db.exec(`
+        CREATE TABLE reports (
+          "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+          "fromTimestamp" INTEGER NOT NULL,
+          "toTimestamp" INTEGER NOT NULL
+        );
+      `);
+    },
+  ]);
+
+  return db;
+}

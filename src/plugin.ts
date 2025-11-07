@@ -1,13 +1,14 @@
 import { ServerAPI, Plugin } from "@signalk/server-api";
 import { schema, Config } from "./config";
-import { render } from "./renderer";
-import { HistorySource, FileSource } from "./sources";
-import { BathymetrySource } from "./types";
-import { join } from "path";
-import { Debugger } from "debug";
+import { createCollector } from "./collector";
+import { createReporter } from "./reporters";
+import { createSqliteSource } from "./sources/sqlite";
+import { getVesselInfo } from "./metadata";
 
 export default function createPlugin(app: ServerAPI): Plugin {
-  let source: BathymetrySource | undefined = undefined;
+  // FIXME: types
+  let collector: ReturnType<typeof createCollector> | undefined = undefined;
+  let reporter: ReturnType<typeof createReporter> | undefined = undefined;
 
   return {
     id: "bathymetry",
@@ -15,26 +16,24 @@ export default function createPlugin(app: ServerAPI): Plugin {
     description: "collect and share bathymetry data",
 
     async start(config: Config) {
-      const datadir = app.getDataDirPath();
-      const chartsdir = join(datadir, "../../charts");
+      app.debug("Starting");
+      const source = createSqliteSource(app, config);
+      const vessel = getVesselInfo(app);
 
-      source = new FileSource({ config, datadir });
-      // Start the bathymetry data source
-      app.debug("Starting bathymetry source");
-      source.start(app).catch((err) => app.error(err));
+      collector = createCollector(app, config, source);
+      reporter = createReporter(app, config, vessel, source);
 
-      // FIXME: Once https://github.com/SignalK/signalk-server/pull/1970 is merged,
-      // check for history API and fall back to using FileSource.
-      const history = new HistorySource({ config, datadir });
-      // Render the latest charts
-      app.debug("Rendering bathymetry charts");
-      render({ source: history, chartsdir, debug: app.debug as Debugger })
-        .then(() => app.debug(`Bathymetry charts rendered in ${chartsdir}`))
-        .catch((err) => app.error(err));
+      collector.start().catch((err) => {
+        // TODO: what is the right behavior on collector error? Restart?
+        app.error("Collector failed");
+        app.error(err);
+      });
+
+      reporter.start();
     },
 
     stop() {
-      source?.stop();
+      collector?.stop();
     },
 
     schema() {
