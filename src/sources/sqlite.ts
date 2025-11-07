@@ -1,9 +1,9 @@
-import Database from 'better-sqlite3';
-import { BathymetryData, BathymetrySource } from '../types.js';
-import { Readable, Writable } from 'stream';
-import { ServerAPI } from '@signalk/server-api';
-import { Config } from '../config.js';
-import { join } from 'path';
+import Database from "better-sqlite3";
+import { BathymetryData, BathymetrySource } from "../types.js";
+import { Readable, Writable } from "stream";
+import { ServerAPI } from "@signalk/server-api";
+import { Config } from "../config.js";
+import { join } from "path";
 
 type BathymetryRow = {
   id: number;
@@ -12,17 +12,18 @@ type BathymetryRow = {
   depth: number;
   timestamp: number;
   heading: number | null;
-}
+};
 
 export function createSqliteSource(app: ServerAPI, config: Config): BathymetrySource {
   const filename = join(app.getDataDirPath(), `${config.uuid}.sqlite`);
+  app.debug(`Creating SQLite source: ${filename}`);
 
   return {
     createWriter: () => createSqliteWriter(filename),
     createReader(options) {
-      return createSqliteReader(filename, options)
-    }
-  }
+      return createSqliteReader(filename, options);
+    },
+  };
 }
 
 export interface SqliteReaderOptions {
@@ -36,14 +37,13 @@ type QueryOptions = {
   offset: number;
   from?: number;
   to?: number;
-}
+};
 
-export function createSqliteReader(filename: string | Database.Database, options: SqliteReaderOptions = {}) {
-  const {
-    batchSize = 1000,
-    from = new Date(0),
-    to = new Date()
-  } = options;
+export function createSqliteReader(
+  filename: string | Database.Database,
+  options: SqliteReaderOptions = {},
+) {
+  const { batchSize = 1000, from = new Date(0), to = new Date() } = options;
 
   let offset = 0;
   let query: Database.Statement<QueryOptions, BathymetryRow>;
@@ -69,18 +69,18 @@ export function createSqliteReader(filename: string | Database.Database, options
       const rows = query.all({ limit: batchSize, offset, from: from.valueOf(), to: to.valueOf() });
 
       rows.forEach(({ id, timestamp, ...row }) => {
-        this.push({ ...row, timestamp: new Date(timestamp) } as BathymetryData)
+        this.push({ ...row, timestamp: new Date(timestamp) } as BathymetryData);
       });
 
       offset += rows.length;
 
       if (rows.length < batchSize) this.push(null);
-    }
+    },
   });
 }
 
 export function createSqliteWriter(filename: string | Database.Database) {
-  let stmt: Database.Statement<Omit<BathymetryRow, 'id'>>;
+  let stmt: Database.Statement<Omit<BathymetryRow, "id">>;
 
   return new Writable({
     objectMode: true,
@@ -112,7 +112,7 @@ export function createSqliteWriter(filename: string | Database.Database) {
       } catch (err) {
         callback(err as Error);
       }
-    }
+    },
   });
 }
 

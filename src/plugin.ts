@@ -16,6 +16,7 @@ export default function createPlugin(app: ServerAPI): Plugin {
     description: "collect and share bathymetry data",
 
     async start(config: Config) {
+      app.debug("Starting");
       const source = createSqliteSource(app, config);
       const vessel = getVesselInfo(app);
 
@@ -24,7 +25,7 @@ export default function createPlugin(app: ServerAPI): Plugin {
 
       collector.start().catch((err) => {
         // TODO: what is the right behavior on collector error? Restart?
-        app.error("Bathymetry collector failed");
+        app.error("Collector failed");
         app.error(err);
       });
 

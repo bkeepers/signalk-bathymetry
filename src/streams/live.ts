@@ -6,9 +6,12 @@ import { Config } from "../config";
 const ttl = 2000;
 
 export function createLiveStream(app: ServerAPI, config: Config) {
+  const path = `environment.depth.${config.path}` as Path;
   let offset = 0;
   if (config.path === "belowTransducer") offset += config.sounder?.z ?? 0;
   if (config.path === "belowKeel") offset += config.sounder?.draft ?? 0;
+
+  app.debug(`Subscribing to ${path}`);
 
   const unsubscribes: (() => void)[] = [];
 
@@ -20,7 +23,7 @@ export function createLiveStream(app: ServerAPI, config: Config) {
       app.subscriptionmanager.subscribe(
         {
           context: "vessels.self" as Context,
-          subscribe: [{ path: `environment.depth.${config.path}` as Path, policy: "instant" }],
+          subscribe: [{ path, policy: "instant" }],
         },
         unsubscribes,
         (error) => app.error(error as string),

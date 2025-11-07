@@ -1,15 +1,27 @@
-import { describe, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { createSqliteReader, createSqliteWriter } from "../../src/sources/sqlite";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 import Database from "better-sqlite3";
 
 const data = [
-  { latitude: 1, longitude: 2, depth: 3, timestamp: new Date("2025-08-06T22:00:00.000Z"), heading: 0 },
+  {
+    latitude: 1,
+    longitude: 2,
+    depth: 3,
+    timestamp: new Date("2025-08-06T22:00:00.000Z"),
+    heading: 0,
+  },
   // without heading
   { latitude: 4, longitude: 5, depth: 6, timestamp: new Date("2025-08-06T23:00:00.000Z") },
   // undefined heading
-  { latitude: 4, longitude: 5, depth: 6, timestamp: new Date("2025-08-06T24:00:00.000Z"), heading: undefined },
+  {
+    latitude: 4,
+    longitude: 5,
+    depth: 6,
+    timestamp: new Date("2025-08-06T24:00:00.000Z"),
+    heading: undefined,
+  },
 ];
 
 test("reading and writing to sqlite", async () => {
@@ -33,7 +45,7 @@ test("reading with from and to", async () => {
 
   const reader = createSqliteReader(database, {
     from: new Date("2025-08-06T22:30:00.000Z"),
-    to: new Date("2025-08-06T23:30:00.000Z")
+    to: new Date("2025-08-06T23:30:00.000Z"),
   });
 
   const result = await reader.toArray();

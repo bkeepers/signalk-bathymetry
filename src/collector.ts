@@ -13,6 +13,8 @@ export function createCollector(app: ServerAPI, config: Config, source: Bathymet
       // Source is not writable, so nothing to do
       if (!source.createWriter) return;
 
+      app.debug("Starting collector");
+
       abortController = new AbortController();
 
       return pipeline(
@@ -24,6 +26,7 @@ export function createCollector(app: ServerAPI, config: Config, source: Bathymet
     },
 
     stop() {
+      app.debug("Stopping collector");
       abortController?.abort();
     },
   };
