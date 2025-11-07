@@ -1,11 +1,10 @@
 import { NOAAReporter } from "./noaa";
 import { Config } from "../config";
 import { ServerAPI } from "@signalk/server-api";
-import { CronJob } from 'cron';
+import { CronJob } from "cron";
 import { VesselInfo } from "../metadata";
 import { Readable } from "stream";
 import { BathymetrySource } from "../types";
-import { createReportLog } from "./log";
 
 export * from "./noaa";
 
@@ -13,27 +12,26 @@ export interface ReporterOptions {
   schedule?: string; // cron schedule string
 }
 
-const DEFAULT_SCHEDULE = process.env.BATHY_REPORT_SCHEDULE ?? '0 0 * * *'; // every day at midnight
+const DEFAULT_SCHEDULE = process.env.BATHY_REPORT_SCHEDULE ?? "0 0 * * *"; // every day at midnight
 
 export function createReporter(
   app: ServerAPI,
   config: Config,
   vessel: VesselInfo,
   source: BathymetrySource,
-  { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {}
+  { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {},
 ) {
   const service = new NOAAReporter();
   const job = new CronJob(schedule, report);
-  const reportLog = createReportLog();
 
-  async function report({ from = reportLog.lastReport, to = new Date() } = {}) {
+  async function report({ from = source.lastReport ?? new Date(0), to = new Date() } = {}) {
     app.debug(`Generating report from ${from.toISOString()} to ${to.toISOString()}`);
     try {
-      const data = await source.createReader({ from, to })
+      const data = await source.createReader({ from, to });
       await submit(data);
-      app.debug('Report submitted successfully');
+      app.debug("Report submitted successfully");
       app.setPluginStatus(`Reported at ${to.toISOString()}`);
-      reportLog.report(to);
+      source.logReport?.({ from, to });
     } catch (err) {
       console.error(err);
       app.error(`Failed to generate or submit report: ${err}`);
@@ -43,7 +41,7 @@ export function createReporter(
   }
 
   async function submit(data: Readable) {
-    app.debug(`Reporting data from ${vessel.name} (${vessel.mmsi})`)
+    app.debug(`Reporting data from ${vessel.name} (${vessel.mmsi})`);
     await service.submit(data, vessel, config);
   }
 
@@ -59,5 +57,5 @@ export function createReporter(
       job.stop();
     },
     submit,
-  }
+  };
 }

@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import { createSqliteReader, createSqliteWriter } from "../../src/sources/sqlite";
+import { createSqliteSource } from "../../src/sources/sqlite";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
-import Database from "better-sqlite3";
+import { app, config } from "../helper";
 
 const data = [
   {
@@ -25,12 +25,11 @@ const data = [
 ];
 
 test("reading and writing to sqlite", async () => {
-  const database = new Database(":memory:");
-
-  const writer = createSqliteWriter(database);
+  const source = createSqliteSource(app, config);
+  const writer = source.createWriter!();
   await pipeline(Readable.from(data), writer);
 
-  const reader = createSqliteReader(database);
+  const reader = await source.createReader({ from: new Date(0), to: new Date() });
   const result = await reader.toArray();
   expect(result.length).toBe(data.length);
   expect(result[0]).toEqual(data[0]);
@@ -39,11 +38,11 @@ test("reading and writing to sqlite", async () => {
 });
 
 test("reading with from and to", async () => {
-  const database = new Database(":memory:");
-  const writer = createSqliteWriter(database);
+  const source = createSqliteSource(app, config);
+  const writer = source.createWriter!();
   await pipeline(Readable.from(data), writer);
 
-  const reader = createSqliteReader(database, {
+  const reader = await source.createReader({
     from: new Date("2025-08-06T22:30:00.000Z"),
     to: new Date("2025-08-06T23:30:00.000Z"),
   });
@@ -51,4 +50,14 @@ test("reading with from and to", async () => {
   const result = await reader.toArray();
   expect(result.length).toBe(1);
   expect(result[0].timestamp).toEqual(data[1].timestamp);
+});
+
+test("logReport", async () => {
+  const source = createSqliteSource(app, config);
+  const from = new Date("2025-08-06T22:00:00.000Z");
+  const to = new Date("2025-08-06T23:00:00.000Z");
+
+  expect(source.lastReport).toBeUndefined();
+  source.logReport!({ from, to });
+  expect(source.lastReport).toEqual(to);
 });

@@ -10,10 +10,9 @@ export type BathymetryData = {
   heading?: number;
 };
 
-export type CreateBathymetryWriter = () => Writable;
-export type CreateBathymetryReader = (options: Timeframe) => Readable | Promise<Readable>;
-
 export interface BathymetrySource {
-  createWriter?: CreateBathymetryWriter;
-  createReader: CreateBathymetryReader;
+  createWriter?: () => Writable;
+  createReader: (options: Timeframe) => Readable | Promise<Readable>;
+  logReport?(timeframe: Timeframe): void;
+  lastReport?: Date;
 }
