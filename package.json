@@ -64,6 +64,9 @@
     "uuid": "^13.0.0"
   },
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "**/*": [
+      "prettier --write --ignore-unknown",
+      "eslint --fix --no-warn-ignored"
+    ]
   }
 }
