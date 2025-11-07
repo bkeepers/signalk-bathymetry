@@ -94,8 +94,14 @@ export function createSqliteReader(
         to: to.valueOf(),
       });
 
-      rows.forEach(({ id, timestamp, ...row }) => {
-        this.push({ ...row, timestamp: new Date(timestamp) } as BathymetryData);
+      rows.forEach(({ longitude, latitude, depth, timestamp, heading }) => {
+        this.push({
+          longitude,
+          latitude,
+          depth,
+          timestamp: new Date(timestamp),
+          heading,
+        } as BathymetryData);
       });
 
       offset += rows.length;

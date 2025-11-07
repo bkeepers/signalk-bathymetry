@@ -19,5 +19,5 @@ export const app = {
   debug: () => {},
   error: () => {},
   getDataDirPath: () => "",
-  setPluginStatus: (status: string) => {},
+  setPluginStatus: () => {},
 } as unknown as ServerAPI;

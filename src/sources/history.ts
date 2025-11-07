@@ -74,32 +74,6 @@ export async function createHistoryReader(options: HistoryReaderOptions) {
     ]),
   );
 
-  /**
-   * Get the list of dates that there is data for in the history.
-   *
-   * @param from - The start date of the range to get available dates for, defaults to 5 years ago
-   * @param to - The end date of the range to get available dates for, defaults to now
-   */
-  async function getAvailableDates({
-    to = new Date().toISOString(),
-    from = new Date(
-      new Date().setFullYear(new Date().getFullYear() - 5),
-    ).toISOString(),
-  }: Partial<HistoryStreamOptions> = {}): Promise<string[]> {
-    const stream = await get({
-      from,
-      to,
-      paths: `environment.depth.${depthPath}`,
-      resolution: "86400", // 1 day
-    });
-    return chain([
-      stream,
-      ({ value }: { value: [string, number | null] }) => {
-        if (value[1]) return value[0];
-      },
-    ]).toArray();
-  }
-
   async function get(query: Record<string, string>) {
     const url = new URL(`${host}/signalk/v1/history/values`);
     url.search = new URLSearchParams(query).toString();

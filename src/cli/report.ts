@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { createReadStream, readFileSync } from "node:fs";
 import { Readable } from "node:stream";
+import { ServerAPI } from "@signalk/server-api";
 
 export async function run() {
   const { values } = parseArgs({
@@ -43,7 +44,7 @@ export async function run() {
   if (values.input) {
     data = createReadStream(values.input).compose(fromXyz());
   } else {
-    const source = createHistorySource({} as any, config);
+    const source = createHistorySource({} as unknown as ServerAPI, config);
     const from = values.from ? new Date(values.from) : new Date();
     const to = values.to ? new Date(values.to) : new Date();
     data = await source.createReader({ from, to });
