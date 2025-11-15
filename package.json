@@ -26,7 +26,8 @@
     "build": "tsc -b",
     "format": "eslint --fix && prettier --write .",
     "check": "eslint && prettier --check .",
-    "prepare": "husky && npm run build"
+    "prepare": "husky && npm run build",
+    "start": "node dist/server.js"
   },
   "bin": {
     "xyz-to-geojson": "bin/xyz-to-geojson",
