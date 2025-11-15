@@ -9,8 +9,8 @@ import pkg from "../../package.json";
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 
-const TOKEN = process.env.NOAA_CSB_TOKEN ?? "test";
-const NOAA_CSB_URL =
+export const TOKEN = process.env.NOAA_CSB_TOKEN ?? "test";
+export const NOAA_CSB_URL =
   process.env.NOAA_CSB_URL ??
   "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
 
