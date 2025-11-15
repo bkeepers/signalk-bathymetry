@@ -11,9 +11,9 @@ export default function createPlugin(app: ServerAPI): Plugin {
   let reporter: ReturnType<typeof createReporter> | undefined = undefined;
 
   return {
-    id: "bathymetry",
-    name: "Bathymetry",
-    description: "collect and share bathymetry data",
+    id: "crowd-depth",
+    name: "Crowd Depth",
+    description: "Collect and share depth data",
 
     async start(config: Config) {
       app.debug("Starting");

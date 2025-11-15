@@ -1,7 +1,7 @@
 {
-  "name": "signalk-bathymetry",
+  "name": "crowd-depth",
   "version": "1.0.0",
-  "description": "collect and share bathymetry data",
+  "description": "Collect and share depth data.",
   "keywords": [
     "bathymetry",
     "depth",
@@ -9,13 +9,13 @@
     "signalk-node-server-plugin",
     "signalk-category-cloud"
   ],
-  "homepage": "https://github.com/bkeepers/signalk-bathymetry",
+  "homepage": "https://github.com/bkeepers/crowd-depth",
   "bugs": {
-    "url": "https://github.com/bkeepers/signalk-bathymetry/issues"
+    "url": "https://github.com/bkeepers/crowd-depth/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bkeepers/signalk-bathymetry.git"
+    "url": "git+https://github.com/bkeepers/crowd-depth.git"
   },
   "license": "ISC",
   "author": "Brandon Keepers",

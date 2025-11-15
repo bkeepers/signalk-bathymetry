@@ -1,6 +1,6 @@
-# signalk-bathymetry
+# Crowd Depth
 
-A [Signal K](https://signalk.org/) plugin to collect and share bathymetry data.
+A [Signal K](https://signalk.org/) plugin to collect and share depth data with crowd-sourced bathymetry efforts.
 
 > **Crowdsourced bathymetry** is the collection and sharing of depth measurements from vessels, using
 > standard navigation instruments, while engaged in routine maritime operations.
