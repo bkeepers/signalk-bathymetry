@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { IRouter } from "express";
 import proxy from "express-http-proxy";
 
-import { NOAA_CSB_URL, TOKEN } from "./reporters/noaa.js";
+import { NOAA_CSB_URL, NOAA_CSB_TOKEN } from "./reporters/noaa.js";
 
 export type APIOptions = {
   url?: string;
@@ -16,8 +16,8 @@ export function createApi(options: APIOptions = {}): IRouter {
 }
 
 export function registerWithRouter(router: IRouter, options: APIOptions = {}) {
-  const { url = NOAA_CSB_URL, token = TOKEN } = options;
-  const proxyUrl = new URL(url);
+  const { url = NOAA_CSB_URL, token = NOAA_CSB_TOKEN } = options;
+  const proxyUrl = new URL("xyz", url);
 
   router.get("/", (req, res) => {
     res.json({ success: true, message: "API is reachable" });

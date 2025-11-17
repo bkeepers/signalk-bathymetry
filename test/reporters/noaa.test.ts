@@ -2,8 +2,8 @@ import { describe, test, expect } from "vitest";
 import {
   NOAAReporter,
   getMetadata,
-  Config,
   BathymetryData,
+  NOAA_CSB_URL,
 } from "../../src/index.js";
 import { Readable } from "stream";
 import nock from "nock";
@@ -19,9 +19,8 @@ const SUCCESS_RESPONSE = {
 };
 
 describe("submit", () => {
-  const reporter = new NOAAReporter({
+  const reporter = new NOAAReporter(config, vessel, {
     token: "test",
-    url: "https://example.com/bathy",
   });
 
   const data: BathymetryData[] = [
@@ -46,10 +45,8 @@ describe("submit", () => {
   ];
 
   test("success", async () => {
-    const scope = nock("https://example.com")
-      .post("/bathy")
-      .reply(200, SUCCESS_RESPONSE);
-    const res = await reporter.submit(Readable.from(data), vessel, config);
+    const scope = nock(NOAA_CSB_URL).post("/xyz").reply(200, SUCCESS_RESPONSE);
+    const res = await reporter.submit(Readable.from(data));
     expect(res).toEqual(SUCCESS_RESPONSE);
     expect(scope.isDone()).toBe(true);
   });
@@ -66,8 +63,8 @@ describe("submit", () => {
   });
 
   test("unauthorized", async () => {
-    const scope = nock("https://example.com")
-      .post("/bathy")
+    const scope = nock(NOAA_CSB_URL)
+      .post("/xyz")
       .reply(403, {
         formErrors: ["Forbidden"],
         fieldErrors: {},
@@ -81,7 +78,7 @@ describe("submit", () => {
   });
 
   test("bad response", async () => {
-    const scope = nock("https://example.com").post("/bathy").reply(500);
+    const scope = nock(NOAA_CSB_URL).post("/xyz").reply(500);
     await expect(
       reporter.submit(Readable.from(data), vessel, config),
     ).rejects.toThrowError("Unexpected status code 500 Internal Server Error");
@@ -90,24 +87,9 @@ describe("submit", () => {
 });
 
 describe("getMetadata", () => {
-  const data = {
-    mmsi: "123456789",
-    imo: "987654321",
-    name: "Test Vessel",
-    loa: 10,
-    type: "Sailing",
-  };
-  const config: Config = {
-    path: "depthBelowService",
-    uuid: "1",
-    sounder: { x: 0, y: 0, z: 0 },
-    gnss: { x: 0, y: 0, z: 0 },
-    anonymous: false,
-  };
-
   test("includes platform data", () => {
-    const metadata = getMetadata(data, config);
-    expect(metadata.platform.uniqueID).toEqual("SIGNALK-1");
+    const metadata = getMetadata(vessel, config);
+    expect(metadata.platform.uniqueID).toEqual("SIGNALK-1234");
     expect(metadata.platform.IDNumber).toEqual("123456789");
     expect(metadata.platform.IDType).toEqual("MMSI");
     expect(metadata.platform.name).toEqual("Test Vessel");
@@ -115,8 +97,14 @@ describe("getMetadata", () => {
   });
 
   test("anonymous does not include MMSI, name, etc", () => {
-    const metadata = getMetadata(data, { ...config, anonymous: true });
-    expect(metadata.platform.uniqueID).toEqual("SIGNALK-1");
+    const metadata = getMetadata(vessel, {
+      ...config,
+      sharing: {
+        ...config.sharing,
+        anonymous: true,
+      },
+    });
+    expect(metadata.platform.uniqueID).toEqual("SIGNALK-1234");
     expect(metadata.platform.IDNumber).toBeUndefined();
     expect(metadata.platform.IDType).toBeUndefined();
     expect(metadata.platform.name).toBeUndefined();

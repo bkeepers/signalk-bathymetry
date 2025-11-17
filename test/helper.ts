@@ -1,18 +1,21 @@
 import { ServerAPI } from "@signalk/server-api";
+import { Config, VesselInfo } from "../src/index.js";
 
-export const vessel = {
+export const vessel: VesselInfo = {
   mmsi: "123456789",
   name: "Test Vessel",
-  type: "Pleasure Craft",
+  type: "Sailing",
   loa: 10,
 };
 
-export const config = {
-  uuid: "1234",
-  anonymous: false,
+export const config: Config = {
   path: "depthFromTransducer",
   sounder: { x: 1, y: 2, z: 3 },
   gnss: { x: 1, y: 2, z: 3 },
+  sharing: {
+    uuid: "1234",
+    anonymous: false,
+  },
 };
 
 export const app = {

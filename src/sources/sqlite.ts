@@ -21,7 +21,7 @@ export function createSqliteSource(
 ): BathymetrySource {
   const filename = process.env.VITEST
     ? ":memory:"
-    : join(app.getDataDirPath(), `${config.uuid}.sqlite`);
+    : join(app.getDataDirPath(), `${config.sharing.uuid}.sqlite`);
 
   app.debug(`Creating SQLite source: ${filename}`);
   const db = createDB(filename);

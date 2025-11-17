@@ -26,7 +26,7 @@ describe("POST /xyz", () => {
 
   test("successfully proxies to NOAA", async () => {
     const scope = nock("https://example.com")
-      .post("/bathy")
+      .post("/xyz")
       .matchHeader("x-auth-token", "test-token")
       .reply(200, SUCCESS_RESPONSE, { "Content-Type": "application/json" });
 

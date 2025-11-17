@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 
 // Can this be inferred from the JSON schema?
 export type Config = {
-  uuid: string;
   path: string;
   sounder: {
     x: number;
@@ -22,7 +21,10 @@ export type Config = {
     make?: string;
     model?: string;
   };
-  anonymous: boolean;
+  sharing: {
+    anonymous: boolean;
+    uuid: string;
+  };
 };
 
 export const DepthPaths = ["belowSurface", "belowTransducer", "belowKeel"];
@@ -130,18 +132,24 @@ export function schema(app: ServerAPI) {
           },
         },
       },
-      anonymous: {
-        type: "boolean",
-        default: false,
-        title: "Share data anonymously",
-        description:
-          "A unique UUID will be used in place of your MMSI and vessel name. ",
-      },
-      uuid: {
-        type: "string",
-        title: "UUID",
-        description: "A unique identifier for your vessel.",
-        default: uuidv4(),
+      sharing: {
+        type: "object",
+        title: "Data Sharing",
+        properties: {
+          anonymous: {
+            type: "boolean",
+            default: false,
+            title: "Share data anonymously",
+            description:
+              "If you do not wish to share your vessel name and MMSI, you can share anonymously with your unique UUID instead.",
+          },
+          uuid: {
+            type: "string",
+            title: "UUID",
+            description: "A unique identifier for your vessel.",
+            default: uuidv4(),
+          },
+        },
       },
     },
   };
