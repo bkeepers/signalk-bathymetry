@@ -45,6 +45,9 @@ export async function identify(
     const res = await fetch(new URL("identify", url).toString(), {
       method: "POST",
     });
+    if (!res.ok) {
+      throw new Error(`Failed to identify: ${res.status} ${res.statusText}`);
+    }
     identity = await res.json();
     app.debug(`UUID: ${identity.uuid}`);
     await writeFile(path, JSON.stringify(identity, null, 2), "utf-8");
