@@ -30,8 +30,7 @@
     "start": "node dist/server.js"
   },
   "bin": {
-    "xyz-to-geojson": "bin/xyz-to-geojson",
-    "bathy-report": "dist/cli/report.js"
+    "xyz-to-geojson": "bin/xyz-to-geojson"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
