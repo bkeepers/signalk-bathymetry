@@ -48,7 +48,9 @@ export function createReporter(
   }
 
   async function submit(data: Readable) {
-    app.debug(`Reporting data from ${vessel.name} (${vessel.mmsi})`);
+    app.debug(
+      `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
+    );
     await service.submit(data);
   }
 
