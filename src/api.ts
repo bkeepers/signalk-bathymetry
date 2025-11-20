@@ -4,20 +4,19 @@ import proxy from "express-http-proxy";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 
-let JWT_SECRET: string;
-if (process.env.BATHY_JWT_SECRET) {
-  JWT_SECRET = process.env.BATHY_JWT_SECRET;
-} else if (process.env.NODE_ENV === "production") {
-  throw new Error(
-    "BATHY_JWT_SECRET environment variable must be set in production for security reasons."
-  );
-} else {
-  JWT_SECRET = "test";
-  console.warn(
-    "[WARNING] Using default JWT secret 'test'. This is insecure and should not be used in production."
-  );
+// Validate required environment variables in production
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.BATHY_JWT_SECRET)
+    throw new Error("Missing BATHY_JWT_SECRET environment variable.");
+  if (!process.env.NOAA_CSB_TOKEN)
+    throw new Error("Missing NOAA_CSB_TOKEN environment variable.");
 }
-const { NOAA_CSB_URL, NOAA_CSB_TOKEN } = process.env;
+
+const {
+  BATHY_JWT_SECRET = "test",
+  NOAA_CSB_URL = "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/",
+  NOAA_CSB_TOKEN = "test",
+} = process.env;
 
 export type APIOptions = {
   url?: string;
@@ -79,7 +78,7 @@ export function verifyIdentity(
   }
 
   // Verify the token
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, BATHY_JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(403).json({ success: false, message: "Invalid token" });
     }
@@ -91,13 +90,9 @@ export function verifyIdentity(
   });
 }
 
-export type JWTProps = {
-  uuid: string;
-};
-
 export function createIdentity(uuid = uuidv4()) {
   return {
     uuid,
-    token: jwt.sign({ uuid }, JWT_SECRET),
+    token: jwt.sign({ uuid }, BATHY_JWT_SECRET),
   };
 }
