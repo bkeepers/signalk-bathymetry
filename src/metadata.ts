@@ -37,8 +37,7 @@ export async function identify(
   let identity: Identity;
 
   try {
-    const data = await readFile(path, "utf-8");
-    identity = JSON.parse(data.toString());
+    identity = JSON.parse(await readFile(path, "utf-8"));
     app.debug(`Loaded identity from ${path}: ${identity.uuid}`);
   } catch {
     app.debug(`Identifying with ${url}`);
