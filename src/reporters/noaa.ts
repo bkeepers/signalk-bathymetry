@@ -15,8 +15,7 @@ export class NOAAReporter {
     public url: string,
     public config: Config,
     public vessel: VesselInfo,
-  ) {
-  }
+  ) {}
 
   correctors() {
     return chain([correctForSensorPosition(this.config), toPrecision()]);
