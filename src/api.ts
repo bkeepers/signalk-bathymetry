@@ -4,7 +4,19 @@ import proxy from "express-http-proxy";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.BATHY_JWT_SECRET || "test";
+let JWT_SECRET: string;
+if (process.env.BATHY_JWT_SECRET) {
+  JWT_SECRET = process.env.BATHY_JWT_SECRET;
+} else if (process.env.NODE_ENV === "production") {
+  throw new Error(
+    "BATHY_JWT_SECRET environment variable must be set in production for security reasons."
+  );
+} else {
+  JWT_SECRET = "test";
+  console.warn(
+    "[WARNING] Using default JWT secret 'test'. This is insecure and should not be used in production."
+  );
+}
 const { NOAA_CSB_URL, NOAA_CSB_TOKEN } = process.env;
 
 export type APIOptions = {
@@ -73,7 +85,7 @@ export function verifyIdentity(
     }
     // If verification is successful, attach the decoded payload to the request
     if (typeof decoded === "object" && "uuid" in decoded) {
-      res.locals.uuid = decoded?.uuid;
+      res.locals.uuid = decoded.uuid;
     }
     next(); // Proceed to the next middleware or route handler
   });

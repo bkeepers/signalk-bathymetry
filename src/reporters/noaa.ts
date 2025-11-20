@@ -16,7 +16,6 @@ export class NOAAReporter {
     public config: Config,
     public vessel: VesselInfo,
   ) {
-    this.url = url;
   }
 
   correctors() {
