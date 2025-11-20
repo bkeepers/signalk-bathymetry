@@ -23,8 +23,8 @@ export default function createPlugin(app: ServerAPI): Plugin {
 
     async start(config: Config) {
       app.debug("Starting");
-      const source = createSqliteSource(app, config);
-      const vessel = getVesselInfo(app);
+      const vessel = await getVesselInfo(app);
+      const source = createSqliteSource(app);
 
       collector = createCollector(app, config, source);
       reporter = createReporter(app, config, vessel, source);

@@ -2,7 +2,6 @@ import Database from "better-sqlite3";
 import { BathymetryData, BathymetrySource } from "../types.js";
 import { Readable, Writable } from "stream";
 import { ServerAPI } from "@signalk/server-api";
-import { Config } from "../config.js";
 import { join } from "path";
 import { runMigrations } from "./sqlite/migrations.js";
 
@@ -15,15 +14,12 @@ type BathymetryRow = {
   heading: number | null;
 };
 
-export function createSqliteSource(
-  app: ServerAPI,
-  config: Config,
-): BathymetrySource {
+export function createSqliteSource(app: ServerAPI): BathymetrySource {
   const filename = process.env.VITEST
     ? ":memory:"
-    : join(app.getDataDirPath(), `${config.sharing.uuid}.sqlite`);
+    : join(app.getDataDirPath(), `bathymetry.sqlite`);
 
-  app.debug(`Creating SQLite source: ${filename}`);
+  app.debug(`Using SQLite source`);
   const db = createDB(filename);
 
   return {

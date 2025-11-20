@@ -22,15 +22,13 @@ export interface NOAAReporterOptions {
 
 export class NOAAReporter {
   url: string;
-  token: string;
 
   constructor(
     public config: Config,
     public vessel: VesselInfo,
-    { url = NOAA_CSB_URL, token = NOAA_CSB_TOKEN }: NOAAReporterOptions = {},
+    { url = NOAA_CSB_URL }: NOAAReporterOptions = {},
   ) {
     this.url = url;
-    this.token = token;
   }
 
   correctors() {
@@ -39,7 +37,7 @@ export class NOAAReporter {
 
   async submit(data: Readable): Promise<IncomingMessage> {
     const metadata: Metadata = getMetadata(this.vessel, this.config);
-    const { uuid } = this.config.sharing;
+    const { uuid } = this.vessel;
 
     return new Promise<IncomingMessage>((resolve, reject) => {
       // Using external form-data package to support streaming
@@ -70,7 +68,7 @@ export class NOAAReporter {
         path: pathname,
         port: port,
         method: "POST",
-        headers: this.token ? { "x-auth-token": this.token } : {},
+        headers: { Authorization: `Bearer ${this.vessel.token}` },
       };
 
       form.submit(params, async (err, res) => {
@@ -118,7 +116,7 @@ export function getMetadata(info: VesselInfo, config: Config) {
     convention: "XYZ CSB 3.0",
     dataLicense: "CC0 1.0",
     platform: {
-      uniqueID: `SIGNALK-${config.sharing.uuid}`,
+      uniqueID: `SIGNALK-${info.uuid}`,
       ...(config.sharing.anonymous
         ? {}
         : {

@@ -1,6 +1,14 @@
 import { ServerAPI } from "@signalk/server-api";
+import { readFile, writeFile } from "fs/promises";
+import { join } from "path";
+import { NOAA_CSB_URL } from "./reporters";
 
-export type VesselInfo = {
+export type Identity = {
+  uuid: string;
+  token: string;
+};
+
+export type VesselInfo = Identity & {
   mmsi?: string;
   imo?: string;
   name?: string;
@@ -8,8 +16,9 @@ export type VesselInfo = {
   type?: string;
 };
 
-export function getVesselInfo(app: ServerAPI): VesselInfo {
+export async function getVesselInfo(app: ServerAPI): Promise<VesselInfo> {
   return {
+    ...(await identify(app)),
     // @ts-expect-error remove after next signalk release
     mmsi: app.config.vesselMMSI,
     imo: app.getSelfPath("registrations.imo"),
@@ -17,4 +26,29 @@ export function getVesselInfo(app: ServerAPI): VesselInfo {
     loa: app.getSelfPath("design.length.value")?.overall,
     type: app.getSelfPath("design.aisShipType.value")?.name,
   };
+}
+
+export async function identify(
+  app: ServerAPI,
+  url = NOAA_CSB_URL,
+): Promise<Identity> {
+  const path = join(app.getDataDirPath(), "identity.json");
+
+  let identity: Identity;
+
+  try {
+    const data = await readFile(path, "utf-8");
+    identity = JSON.parse(data.toString());
+    app.debug(`Loaded identity from ${path}: ${identity.uuid}`);
+  } catch {
+    app.debug(`Identifying with ${url}`);
+    const res = await fetch(new URL("identify", url).toString(), {
+      method: "POST",
+    });
+    identity = await res.json();
+    app.debug(`UUID: ${identity.uuid}`);
+    await writeFile(path, JSON.stringify(identity, null, 2), "utf-8");
+  }
+
+  return identity;
 }
