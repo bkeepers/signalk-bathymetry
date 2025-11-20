@@ -9,36 +9,37 @@ import pkg from "../../package.json";
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 
-const TOKEN = process.env.NOAA_CSB_TOKEN ?? "test";
-const NOAA_CSB_URL =
-  process.env.NOAA_CSB_URL ??
-  "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/xyz";
+export const {
+  NOAA_CSB_TOKEN = "test",
+  NOAA_CSB_URL = "https://depth.openwaters.io",
+} = process.env;
 
 // https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
 export interface NOAAReporterOptions {
-  token?: string;
   url?: string;
+  token?: string;
 }
 
 export class NOAAReporter {
-  token: string;
   url: string;
+  token: string;
 
-  constructor({ token = TOKEN, url = NOAA_CSB_URL }: NOAAReporterOptions = {}) {
-    this.token = token;
+  constructor(
+    public config: Config,
+    public vessel: VesselInfo,
+    { url = NOAA_CSB_URL, token = NOAA_CSB_TOKEN }: NOAAReporterOptions = {},
+  ) {
     this.url = url;
+    this.token = token;
   }
 
-  correctors(config: Config) {
-    return chain([correctForSensorPosition(config), toPrecision()]);
+  correctors() {
+    return chain([correctForSensorPosition(this.config), toPrecision()]);
   }
 
-  async submit(
-    data: Readable,
-    vessel: VesselInfo,
-    config: Config,
-  ): Promise<IncomingMessage> {
-    const metadata: Metadata = getMetadata(vessel, config);
+  async submit(data: Readable): Promise<IncomingMessage> {
+    const metadata: Metadata = getMetadata(this.vessel, this.config);
+    const { uuid } = this.config.sharing;
 
     return new Promise<IncomingMessage>((resolve, reject) => {
       // Using external form-data package to support streaming
@@ -47,11 +48,11 @@ export class NOAAReporter {
 
       const file = chain([
         data,
-        this.correctors(config),
+        this.correctors(),
         toXyz({ includeHeading: false }),
       ]);
 
-      const prefix = `${config.uuid}-${new Date().toISOString()}`;
+      const prefix = `${uuid}-${new Date().toISOString()}`;
       form.append("metadataInput", JSON.stringify(metadata), {
         contentType: "application/json",
         filename: `${prefix}.json`,
@@ -61,19 +62,15 @@ export class NOAAReporter {
         filename: `${prefix}.csv`,
       });
 
-      const url = new URL(this.url);
-
-      console.log("Submitting to", url.href);
+      const { hostname, pathname, port } = new URL("xyz", this.url);
 
       const params: SubmitOptions = {
         protocol: "https:",
-        host: url.hostname,
-        path: url.pathname,
-        port: url.port,
+        host: hostname,
+        path: pathname,
+        port: port,
         method: "POST",
-        headers: {
-          "x-auth-token": this.token,
-        },
+        headers: this.token ? { "x-auth-token": this.token } : {},
       };
 
       form.submit(params, async (err, res) => {
@@ -121,8 +118,8 @@ export function getMetadata(info: VesselInfo, config: Config) {
     convention: "XYZ CSB 3.0",
     dataLicense: "CC0 1.0",
     platform: {
-      uniqueID: `SIGNALK-${config.uuid}`,
-      ...(config.anonymous
+      uniqueID: `SIGNALK-${config.sharing.uuid}`,
+      ...(config.sharing.anonymous
         ? {}
         : {
             type: info.type,

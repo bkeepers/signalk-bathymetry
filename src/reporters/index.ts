@@ -21,7 +21,7 @@ export function createReporter(
   source: BathymetrySource,
   { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {},
 ) {
-  const service = new NOAAReporter();
+  const service = new NOAAReporter(config, vessel);
   const job = new CronJob(schedule, report);
 
   async function report({
@@ -48,8 +48,10 @@ export function createReporter(
   }
 
   async function submit(data: Readable) {
-    app.debug(`Reporting data from ${vessel.name} (${vessel.mmsi})`);
-    await service.submit(data, vessel, config);
+    app.debug(
+      `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
+    );
+    await service.submit(data);
   }
 
   return {

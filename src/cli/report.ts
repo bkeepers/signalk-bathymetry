@@ -50,7 +50,7 @@ export async function run() {
     data = await source.createReader({ from, to });
   }
 
-  console.log(await new NOAAReporter().submit(data, vessel, config));
+  console.log(await new NOAAReporter(config, vessel).submit(data));
   // setImmediate(() => whyIsNodeRunning())
   // setInterval(() => whyIsNodeRunning(), 5000)
 }
