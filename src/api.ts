@@ -2,10 +2,10 @@ import { Router } from "express";
 import type { IRouter, NextFunction, Request, Response } from "express";
 import proxy from "express-http-proxy";
 import { v4 as uuidv4 } from "uuid";
-import { NOAA_CSB_URL, NOAA_CSB_TOKEN } from "./reporters/noaa.js";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.BATHY_JWT_SECRET || "test";
+const { NOAA_CSB_URL, NOAA_CSB_TOKEN } = process.env;
 
 export type APIOptions = {
   url?: string;
@@ -42,6 +42,8 @@ export function registerWithRouter(router: IRouter, options: APIOptions = {}) {
       https: proxyUrl.protocol === "https:",
       proxyReqPathResolver: () => proxyUrl.pathname,
       proxyReqOptDecorator(reqOpts) {
+        // Remove existing Authorization header and add x-auth-token header
+        delete reqOpts.headers["authorization"];
         reqOpts.headers["x-auth-token"] = token;
         return reqOpts;
       },

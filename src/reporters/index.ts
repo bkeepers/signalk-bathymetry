@@ -12,6 +12,7 @@ export interface ReporterOptions {
   schedule?: string; // cron schedule string
 }
 
+export const { BATHY_URL = "https://depth.openwaters.io" } = process.env;
 const DEFAULT_SCHEDULE = process.env.BATHY_REPORT_SCHEDULE ?? "0 0 * * *"; // every day at midnight
 
 export function createReporter(
@@ -21,7 +22,7 @@ export function createReporter(
   source: BathymetrySource,
   { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {},
 ) {
-  const service = new NOAAReporter(config, vessel);
+  const service = new NOAAReporter(BATHY_URL, config, vessel);
   const job = new CronJob(schedule, report);
 
   async function report({

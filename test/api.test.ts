@@ -54,6 +54,7 @@ describe("POST /xyz", () => {
     const scope = nock("https://example.com")
       .post("/xyz")
       .matchHeader("x-auth-token", "test-token")
+      .matchHeader("authorization", (val) => !val) // Ensure Authorization header is removed
       .reply(200, SUCCESS_RESPONSE, { "Content-Type": "application/json" });
 
     await request(app)

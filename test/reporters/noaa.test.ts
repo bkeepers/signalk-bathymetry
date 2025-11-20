@@ -3,7 +3,7 @@ import {
   NOAAReporter,
   getMetadata,
   BathymetryData,
-  NOAA_CSB_URL,
+  BATHY_URL,
 } from "../../src/index.js";
 import { Readable } from "stream";
 import nock from "nock";
@@ -19,9 +19,7 @@ const SUCCESS_RESPONSE = {
 };
 
 describe("submit", () => {
-  const reporter = new NOAAReporter(config, vessel, {
-    token: "test",
-  });
+  const reporter = new NOAAReporter(BATHY_URL, config, vessel);
 
   const data: BathymetryData[] = [
     {
@@ -45,7 +43,7 @@ describe("submit", () => {
   ];
 
   test("success", async () => {
-    const scope = nock(NOAA_CSB_URL).post("/xyz").reply(200, SUCCESS_RESPONSE);
+    const scope = nock(BATHY_URL).post("/xyz").reply(200, SUCCESS_RESPONSE);
     const res = await reporter.submit(Readable.from(data));
     expect(res).toEqual(SUCCESS_RESPONSE);
     expect(scope.isDone()).toBe(true);
@@ -57,13 +55,11 @@ describe("submit", () => {
         this.emit("error", new Error("Stream error"));
       },
     });
-    await expect(reporter.submit(stream, vessel, config)).rejects.toThrowError(
-      "Stream error",
-    );
+    await expect(reporter.submit(stream)).rejects.toThrowError("Stream error");
   });
 
   test("unauthorized", async () => {
-    const scope = nock(NOAA_CSB_URL)
+    const scope = nock(BATHY_URL)
       .post("/xyz")
       .reply(403, {
         formErrors: ["Forbidden"],
@@ -71,17 +67,17 @@ describe("submit", () => {
         message: "Forbidden",
         success: false,
       });
-    await expect(
-      reporter.submit(Readable.from(data), vessel, config),
-    ).rejects.toThrowError("Unexpected status code 403 Forbidden");
+    await expect(reporter.submit(Readable.from(data))).rejects.toThrowError(
+      "Unexpected status code 403 Forbidden",
+    );
     expect(scope.isDone()).toBe(true);
   });
 
   test("bad response", async () => {
-    const scope = nock(NOAA_CSB_URL).post("/xyz").reply(500);
-    await expect(
-      reporter.submit(Readable.from(data), vessel, config),
-    ).rejects.toThrowError("Unexpected status code 500 Internal Server Error");
+    const scope = nock(BATHY_URL).post("/xyz").reply(500);
+    await expect(reporter.submit(Readable.from(data))).rejects.toThrowError(
+      "Unexpected status code 500 Internal Server Error",
+    );
     expect(scope.isDone()).toBe(true);
   });
 });

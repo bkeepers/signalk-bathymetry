@@ -9,24 +9,12 @@ import pkg from "../../package.json";
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 
-export const {
-  NOAA_CSB_TOKEN = "test",
-  NOAA_CSB_URL = "https://depth.openwaters.io",
-} = process.env;
-
 // https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
-export interface NOAAReporterOptions {
-  url?: string;
-  token?: string;
-}
-
 export class NOAAReporter {
-  url: string;
-
   constructor(
+    public url: string,
     public config: Config,
     public vessel: VesselInfo,
-    { url = NOAA_CSB_URL }: NOAAReporterOptions = {},
   ) {
     this.url = url;
   }

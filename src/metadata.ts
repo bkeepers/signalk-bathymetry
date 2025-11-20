@@ -1,7 +1,7 @@
 import { ServerAPI } from "@signalk/server-api";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
-import { NOAA_CSB_URL } from "./reporters";
+import { BATHY_URL } from "./reporters";
 
 export type Identity = {
   uuid: string;
@@ -30,7 +30,7 @@ export async function getVesselInfo(app: ServerAPI): Promise<VesselInfo> {
 
 export async function identify(
   app: ServerAPI,
-  url = NOAA_CSB_URL,
+  url = BATHY_URL,
 ): Promise<Identity> {
   const path = join(app.getDataDirPath(), "identity.json");
 
