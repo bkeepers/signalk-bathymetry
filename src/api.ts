@@ -1,8 +1,25 @@
 import { Router } from "express";
-import type { IRouter } from "express";
-import proxy from "express-http-proxy";
+import type { IRouter, NextFunction, Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
+import jwt from "jsonwebtoken";
+import busboy from "busboy";
+import { text } from "stream/consumers";
+import { Metadata, submitFormData } from "./reporters/noaa.js";
+import { Readable } from "stream";
 
-import { NOAA_CSB_URL, NOAA_CSB_TOKEN } from "./reporters/noaa.js";
+// Validate required environment variables in production
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.BATHY_JWT_SECRET)
+    throw new Error("Missing BATHY_JWT_SECRET environment variable.");
+  if (!process.env.NOAA_CSB_TOKEN)
+    throw new Error("Missing NOAA_CSB_TOKEN environment variable.");
+}
+
+const {
+  BATHY_JWT_SECRET = "test",
+  NOAA_CSB_URL = "https://www.ngdc.noaa.gov/ingest-external/upload/csb/test/",
+  NOAA_CSB_TOKEN = "test",
+} = process.env;
 
 export type APIOptions = {
   url?: string;
@@ -17,10 +34,13 @@ export function createApi(options: APIOptions = {}): IRouter {
 
 export function registerWithRouter(router: IRouter, options: APIOptions = {}) {
   const { url = NOAA_CSB_URL, token = NOAA_CSB_TOKEN } = options;
-  const proxyUrl = new URL("xyz", url);
 
   router.get("/", (req, res) => {
     res.json({ success: true, message: "API is reachable" });
+  });
+
+  router.post("/identify", (req, res) => {
+    res.json(createIdentity());
   });
 
   /**
@@ -28,15 +48,122 @@ export function registerWithRouter(router: IRouter, options: APIOptions = {}) {
    *
    * @see https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/GuidanceforSubmittingCSBDataToTheIHODCDB%20%281%29.pdf
    */
-  router.use(
-    "/xyz",
-    proxy(proxyUrl.origin, {
-      https: proxyUrl.protocol === "https:",
-      proxyReqPathResolver: () => proxyUrl.pathname,
-      proxyReqOptDecorator(reqOpts) {
-        reqOpts.headers["x-auth-token"] = token;
-        return reqOpts;
-      },
-    }),
-  );
+  router.post("/xyz", verifyIdentity, async (req, res) => {
+    let metadata: Metadata;
+    let data: Readable;
+
+    try {
+      [metadata, data] = await xyzFromRequest(req);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ success: false, message: (error as Error).message });
+    }
+
+    // Validate that the uniqueID matches the identity UUID
+    const { uuid } = res.locals;
+    const uniqueID = metadata?.platform?.uniqueID;
+    if (uniqueID !== `SIGNALK-${uuid}`) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invalid uniqueID" });
+    }
+
+    // Forward the submission to NOAA CSB
+    const submission = await submitFormData(
+      new URL("xyz", url),
+      `${uuid}-${new Date().toISOString()}`,
+      metadata,
+      data,
+      { "x-auth-token": token },
+    );
+
+    res.json(submission);
+  });
+}
+
+export function xyzFromRequest(
+  req: Request,
+): Promise<[metadata: Metadata, data: Readable]> {
+  return new Promise((resolve, reject) => {
+    let metadata: Metadata;
+    let data: Readable;
+
+    // Resolve the promise when both metadata and data are received. The caller will read data from the stream.
+    function resolveIfReady() {
+      if (metadata && data) {
+        resolve([metadata, data]);
+      }
+    }
+
+    try {
+      const body = busboy({ headers: req.headers });
+      body.on("file", async (name, file) => {
+        if (name === "metadataInput") {
+          metadata = JSON.parse(await text(file));
+        } else if (name === "file") {
+          data = file;
+        } else {
+          return reject(new Error(`Unknown field [${name}]`));
+        }
+
+        resolveIfReady();
+      });
+
+      // If metadataInput does not have a filename, it may come as a field
+      body.on("field", (name, val) => {
+        if (name === "metadataInput") {
+          metadata = JSON.parse(val);
+        } else {
+          return reject(new Error(`Unknown Field [${name}]`));
+        }
+
+        resolveIfReady();
+      });
+
+      body.on("close", () => {
+        if (!metadata) return reject(new Error("Missing [metadataInput]"));
+        if (!data) return reject(new Error("Missing [file]"));
+      });
+
+      req.pipe(body);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+export function verifyIdentity(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  // Get token from the Authorization header (e.g., "Bearer <token>")
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ success: false, message: "No token provided" });
+  }
+
+  // Verify the token
+  jwt.verify(token, BATHY_JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: "Invalid token" });
+    }
+    // If verification is successful, attach the decoded payload to the request
+    if (typeof decoded === "object" && "uuid" in decoded) {
+      res.locals.uuid = decoded.uuid;
+    }
+    next(); // Proceed to the next middleware or route handler
+  });
+}
+
+export function createIdentity(uuid = uuidv4()) {
+  return {
+    uuid,
+    token: jwt.sign({ uuid }, BATHY_JWT_SECRET),
+  };
 }

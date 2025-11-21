@@ -1,17 +1,17 @@
-import { NOAAReporter } from "./noaa";
-import { Config } from "../config";
+import { NOAAReporter } from "./noaa.js";
+import { Config } from "../config.js";
 import { ServerAPI } from "@signalk/server-api";
 import { CronJob } from "cron";
-import { VesselInfo } from "../metadata";
-import { Readable } from "stream";
-import { BathymetrySource } from "../types";
+import { VesselInfo } from "../metadata.js";
+import { BathymetrySource } from "../types.js";
 
-export * from "./noaa";
+export * from "./noaa.js";
 
 export interface ReporterOptions {
   schedule?: string; // cron schedule string
 }
 
+export const { BATHY_URL = "https://depth.openwaters.io" } = process.env;
 const DEFAULT_SCHEDULE = process.env.BATHY_REPORT_SCHEDULE ?? "0 0 * * *"; // every day at midnight
 
 export function createReporter(
@@ -21,7 +21,7 @@ export function createReporter(
   source: BathymetrySource,
   { schedule = DEFAULT_SCHEDULE }: ReporterOptions = {},
 ) {
-  const service = new NOAAReporter(config, vessel);
+  const service = new NOAAReporter(BATHY_URL, config, vessel);
   const job = new CronJob(schedule, report);
 
   async function report({
@@ -33,8 +33,11 @@ export function createReporter(
     );
     try {
       const data = await source.createReader({ from, to });
-      await submit(data);
-      app.debug("Report submitted successfully");
+      app.debug(
+        `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
+      );
+      const submission = await service.submit(data);
+      app.debug("Submission response: %j", submission);
       app.setPluginStatus(`Reported at ${to.toISOString()}`);
       source.logReport?.({ from, to });
     } catch (err) {
@@ -45,13 +48,6 @@ export function createReporter(
       );
       return;
     }
-  }
-
-  async function submit(data: Readable) {
-    app.debug(
-      `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
-    );
-    await service.submit(data);
   }
 
   return {
@@ -65,6 +61,5 @@ export function createReporter(
       app.debug(`Stopping reporter`);
       job.stop();
     },
-    submit,
   };
 }

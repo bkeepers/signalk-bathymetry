@@ -1,13 +1,9 @@
-export * from "./sources";
-export * from "./streams";
-export * from "./types";
-export * from "./config";
-export * from "./metadata";
-export * from "./reporters";
-
-import createPlugin from "./plugin";
+import createPlugin from "./plugin.js";
 
 export default createPlugin;
-
-// Set module.exports for CJS support
-// module.exports = createPlugin;
+export * from "./sources/index.js";
+export * from "./streams/index.js";
+export * from "./types.js";
+export * from "./config.js";
+export * from "./metadata.js";
+export * from "./reporters/index.js";

@@ -1,5 +1,5 @@
 import { Transform, TransformOptions } from "stream";
-import { BathymetryData } from "../types";
+import { BathymetryData } from "../types.js";
 import * as GeoJSON from "geojson";
 
 export class ToGeoJSON extends Transform {

@@ -1,5 +1,5 @@
 import { Transform } from "stream";
-import { BathymetryData } from "../types";
+import { BathymetryData } from "../types.js";
 import { parse } from "csv-parse";
 
 /**

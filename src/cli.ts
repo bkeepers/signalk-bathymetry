@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { ToGeoJSON } from "./streams/geojson.js";
-import { fromXyz } from "./streams/xyz";
+import { fromXyz } from "./streams/xyz.js";
 import { pipeline } from "stream/promises";
 import { transform } from "stream-transform";
 import { correctForSensorPosition, toPrecision } from "./streams/transforms.js";

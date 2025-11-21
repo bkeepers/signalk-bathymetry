@@ -1,5 +1,4 @@
 import { ServerAPI } from "@signalk/server-api";
-import { v4 as uuidv4 } from "uuid";
 
 // Can this be inferred from the JSON schema?
 export type Config = {
@@ -23,7 +22,6 @@ export type Config = {
   };
   sharing: {
     anonymous: boolean;
-    uuid: string;
   };
 };
 
@@ -34,7 +32,6 @@ export function schema(app: ServerAPI) {
     type: "object",
     description:
       "By enabling this plugin, you agree to share your position and depth data with the IHO data collection service under the terms of Creative Commons 1.0 Universal public domain dedication (CCO).",
-    require: ["uuid"],
     properties: {
       path: {
         type: "string",
@@ -141,13 +138,7 @@ export function schema(app: ServerAPI) {
             default: false,
             title: "Share data anonymously",
             description:
-              "If you do not wish to share your vessel name and MMSI, you can share anonymously with your unique UUID instead.",
-          },
-          uuid: {
-            type: "string",
-            title: "UUID",
-            description: "A unique identifier for your vessel.",
-            default: uuidv4(),
+              "If you do not wish to share your vessel name and MMSI, you can share anonymously with a unique UUID instead.",
           },
         },
       },

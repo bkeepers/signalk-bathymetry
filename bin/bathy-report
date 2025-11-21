@@ -1,3 +1,0 @@
-#!/bin/sh
-
-/usr/bin/env node dist/cli/report.js $@

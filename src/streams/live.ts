@@ -1,6 +1,6 @@
 import { Context, Delta, Path, ServerAPI } from "@signalk/server-api";
 import { Readable } from "stream";
-import { Config } from "../config";
+import { Config } from "../config.js";
 
 /** Maximum age of last position fix for a depth to be saved */
 const ttl = 2000;

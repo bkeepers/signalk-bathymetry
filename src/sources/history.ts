@@ -1,11 +1,16 @@
-import { Config } from "../config";
-import { parser } from "stream-json";
-import { pick } from "stream-json/filters/Pick";
-import { streamArray } from "stream-json/streamers/StreamArray";
+import { Config } from "../config.js";
+import cjsStreamJSON from "stream-json";
+import cjsPick from "stream-json/filters/Pick.js";
+import cjsStreamArray from "stream-json/streamers/StreamArray.js";
 import { chain } from "stream-chain";
 import { Readable } from "stream";
-import { BathymetrySource, Timeframe } from "../types";
+import { BathymetrySource, Timeframe } from "../types.js";
 import { ServerAPI } from "@signalk/server-api";
+
+// Workaround for stream-json ESM/CJS interop
+const { parser } = cjsStreamJSON;
+const { streamArray } = cjsStreamArray;
+const { pick } = cjsPick;
 
 const DEFAULT_HOST = process.env.SIGNALK_HOST ?? "http://localhost:3000";
 
