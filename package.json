@@ -19,8 +19,8 @@
   },
   "license": "ISC",
   "author": "Brandon Keepers",
-  "type": "commonjs",
-  "main": "dist/index.js",
+  "type": "module",
+  "exports": "./dist/index.js",
   "scripts": {
     "test": "vitest",
     "build": "tsc -b",

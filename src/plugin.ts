@@ -1,11 +1,11 @@
 import { ServerAPI, Plugin } from "@signalk/server-api";
-import { schema, Config } from "./config";
-import { createCollector } from "./collector";
-import { createReporter } from "./reporters";
-import { createSqliteSource } from "./sources/sqlite";
-import { getVesselInfo } from "./metadata";
-import { createApi } from "./api";
-import openApi from "./openApi.json";
+import { schema, Config } from "./config.js";
+import { createCollector } from "./collector.js";
+import { createReporter } from "./reporters/index.js";
+import { createSqliteSource } from "./sources/sqlite.js";
+import { getVesselInfo } from "./metadata.js";
+import { createApi } from "./api.js";
+import openApi from "./openApi.json" with { type: "json" };
 
 export default function createPlugin(app: ServerAPI): Plugin {
   // FIXME: types

@@ -1,10 +1,10 @@
-import { Config } from "../config";
+import { Config } from "../config.js";
 import { parser } from "stream-json";
-import { pick } from "stream-json/filters/Pick";
-import { streamArray } from "stream-json/streamers/StreamArray";
+import { pick } from "stream-json/filters/Pick.js";
+import { streamArray } from "stream-json/streamers/StreamArray.js";
 import { chain } from "stream-chain";
 import { Readable } from "stream";
-import { BathymetrySource, Timeframe } from "../types";
+import { BathymetrySource, Timeframe } from "../types.js";
 import { ServerAPI } from "@signalk/server-api";
 
 const DEFAULT_HOST = process.env.SIGNALK_HOST ?? "http://localhost:3000";

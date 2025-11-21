@@ -1,4 +1,4 @@
-import { BathymetryData } from "../types";
+import { BathymetryData } from "../types.js";
 import { computeDestinationPoint } from "geolib";
 
 /**

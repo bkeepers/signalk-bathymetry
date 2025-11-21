@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
+    "module": "nodenext",
     "resolveJsonModule": true,
     "sourceMap": true,
     "tsBuildInfoFile": "dist/.tsbuildinfo",

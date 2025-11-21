@@ -4,7 +4,7 @@ import { text } from "stream/consumers";
 import type { VesselInfo } from "../metadata.js";
 import type { Readable } from "stream";
 import { Config } from "../config.js";
-import pkg from "../../package.json";
+import pkg from "../../package.json" with { type: "json" };
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 

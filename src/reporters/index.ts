@@ -1,11 +1,11 @@
-import { NOAAReporter } from "./noaa";
-import { Config } from "../config";
+import { NOAAReporter } from "./noaa.js";
+import { Config } from "../config.js";
 import { ServerAPI } from "@signalk/server-api";
 import { CronJob } from "cron";
-import { VesselInfo } from "../metadata";
-import { BathymetrySource } from "../types";
+import { VesselInfo } from "../metadata.js";
+import { BathymetrySource } from "../types.js";
 
-export * from "./noaa";
+export * from "./noaa.js";
 
 export interface ReporterOptions {
   schedule?: string; // cron schedule string

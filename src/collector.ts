@@ -1,9 +1,9 @@
 import { pipeline } from "stream/promises";
-import { createLiveStream, toPrecision } from "./streams";
+import { createLiveStream, toPrecision } from "./streams/index.js";
 import { ServerAPI } from "@signalk/server-api";
-import { Config } from "./config";
+import { Config } from "./config.js";
 import { transform } from "stream-transform";
-import { BathymetrySource } from "./types";
+import { BathymetrySource } from "./types.js";
 
 export function createCollector(
   app: ServerAPI,

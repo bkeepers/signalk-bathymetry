@@ -1,7 +1,7 @@
 import { ServerAPI } from "@signalk/server-api";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
-import { BATHY_URL } from "./reporters";
+import { BATHY_URL } from "./reporters/index.js";
 
 export type Identity = {
   uuid: string;

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 import busboy from "busboy";
 import { text } from "stream/consumers";
-import { Metadata, submitFormData } from "./reporters/noaa";
+import { Metadata, submitFormData } from "./reporters/noaa.js";
 import { Readable } from "stream";
 
 // Validate required environment variables in production
