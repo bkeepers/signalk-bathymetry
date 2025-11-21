@@ -106,8 +106,8 @@ export function getMetadata(info: VesselInfo, config: Config) {
       vertical: "Transducer",
     },
     providerContactPoint: {
-      orgName: "Signal K",
-      email: "info@signalk.org",
+      orgName: "Open Water Software",
+      email: "bathy@openwaters.io",
       logger: `${pkg.name} (${pkg.homepage})`,
       loggerVersion: pkg.version,
     },
