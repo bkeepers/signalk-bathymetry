@@ -3,13 +3,68 @@ import { toXyz } from "../streams/xyz.js";
 import { text } from "stream/consumers";
 import type { VesselInfo } from "../metadata.js";
 import type { Readable } from "stream";
-import type { IncomingMessage } from "http";
 import { Config } from "../config.js";
 import pkg from "../../package.json";
 import { correctForSensorPosition, toPrecision } from "../streams/index.js";
 import chain from "stream-chain";
 
-// https://www.ncei.noaa.gov/sites/g/files/anmtlf171/files/2024-04/SampleCSBFileFormats.pdf
+export type SubmissionResponse = {
+  success: boolean;
+  message: string;
+  submissionIds: string[];
+};
+
+export function submitFormData(
+  url: URL,
+  prefix: string,
+  metadata: Metadata,
+  file: Readable,
+  headers: Record<string, string> = {},
+): Promise<SubmissionResponse> {
+  return new Promise<SubmissionResponse>((resolve, reject) => {
+    // Using external form-data package to support streaming
+    const form = new StreamFormData();
+    form.on("error", reject);
+
+    form.append("metadataInput", JSON.stringify(metadata), {
+      contentType: "application/json",
+    });
+
+    form.append("file", file, {
+      contentType: "application/csv",
+      filename: `${prefix}.csv`,
+    });
+
+    const options: SubmitOptions = {
+      protocol: url.protocol == "https:" ? "https:" : "http:",
+      host: url.hostname,
+      path: url.pathname,
+      port: url.port,
+      method: "POST",
+      headers,
+    };
+
+    form.submit(options, async (err, res) => {
+      if (err) {
+        form.destroy(err);
+        return reject(err);
+      }
+
+      if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+        return reject(
+          new Error(
+            `Unexpected status code ${res.statusCode} ${res.statusMessage}`,
+          ),
+        );
+      }
+
+      // Drain the response
+      res.resume();
+      resolve(JSON.parse(await text(res)));
+    });
+  });
+}
+
 export class NOAAReporter {
   constructor(
     public url: string,
@@ -21,62 +76,19 @@ export class NOAAReporter {
     return chain([correctForSensorPosition(this.config), toPrecision()]);
   }
 
-  async submit(data: Readable): Promise<IncomingMessage> {
+  async submit(data: Readable) {
+    const url = new URL("xyz", this.url);
     const metadata: Metadata = getMetadata(this.vessel, this.config);
     const { uuid } = this.vessel;
+    const prefix = `${uuid}-${new Date().toISOString()}`;
+    const file = chain([
+      data,
+      this.correctors(),
+      toXyz({ includeHeading: false }),
+    ]);
 
-    return new Promise<IncomingMessage>((resolve, reject) => {
-      // Using external form-data package to support streaming
-      const form = new StreamFormData();
-      form.on("error", reject);
-
-      const file = chain([
-        data,
-        this.correctors(),
-        toXyz({ includeHeading: false }),
-      ]);
-
-      const prefix = `${uuid}-${new Date().toISOString()}`;
-      form.append("metadataInput", JSON.stringify(metadata), {
-        contentType: "application/json",
-        filename: `${prefix}.json`,
-      });
-      form.append("file", file, {
-        contentType: "application/csv",
-        filename: `${prefix}.csv`,
-      });
-
-      const { hostname, pathname, port } = new URL("xyz", this.url);
-
-      const params: SubmitOptions = {
-        protocol: "https:",
-        host: hostname,
-        path: pathname,
-        port: port,
-        method: "POST",
-        headers: { Authorization: `Bearer ${this.vessel.token}` },
-      };
-
-      form.submit(params, async (err, res) => {
-        if (err) {
-          form.destroy(err);
-          return reject(err);
-        }
-
-        if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
-          return reject(
-            new Error(
-              `Unexpected status code ${res.statusCode} ${res.statusMessage}`,
-            ),
-          );
-        }
-
-        // Drain the response
-        res.resume();
-        const body = JSON.parse(await text(res));
-
-        resolve(body);
-      });
+    return submitFormData(url, prefix, metadata, file, {
+      Authorization: `Bearer ${this.vessel.token}`,
     });
   }
 }

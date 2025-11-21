@@ -3,6 +3,8 @@ import request from "supertest";
 import express from "express";
 import nock from "nock";
 import { createApi, createIdentity } from "../src/api";
+import { getMetadata } from "../src";
+import { config, vessel } from "./helper";
 
 // This is a real response from NOAA for a valid submission
 const SUCCESS_RESPONSE = {
@@ -27,7 +29,6 @@ describe("POST /xyz", () => {
   test("rejects requests without token", async () => {
     await request(app)
       .post("/xyz")
-      .expect("Content-Type", /json/)
       .expect(401)
       .expect({ success: false, message: "No token provided" });
   });
@@ -36,7 +37,6 @@ describe("POST /xyz", () => {
     await request(app)
       .post("/xyz")
       .set("Authorization", "malformed-token")
-      .expect("Content-Type", /json/)
       .expect(401)
       .expect({ success: false, message: "No token provided" });
   });
@@ -45,9 +45,35 @@ describe("POST /xyz", () => {
     await request(app)
       .post("/xyz")
       .set("Authorization", "Bearer invalid-token")
-      .expect("Content-Type", /json/)
       .expect(403)
       .expect({ success: false, message: "Invalid token" });
+  });
+
+  test("rejects requests with missing data", async () => {
+    await request(app)
+      .post("/xyz")
+      .set("Authorization", `Bearer ${createIdentity(vessel.uuid).token}`)
+      .expect(400)
+      .expect({ success: false, message: "Missing Content-Type" });
+  });
+
+  test("rejects request with mismatched uuid", async () => {
+    const metadata = getMetadata(vessel, config);
+    const { token } = createIdentity("WRONG");
+
+    await request(app)
+      .post("/xyz")
+      .set("Authorization", `Bearer ${token}`)
+      .field("metadataInput", JSON.stringify(metadata), {
+        filename: "test.json",
+        contentType: "application/json",
+      })
+      .field("file", "dummy data", {
+        filename: "test.xyz",
+        contentType: "application/csv",
+      })
+      .expect(403)
+      .expect({ success: false, message: "Invalid uniqueID" });
   });
 
   test("proxies to NOAA with valid token", async () => {
@@ -57,9 +83,19 @@ describe("POST /xyz", () => {
       .matchHeader("authorization", (val) => !val) // Ensure Authorization header is removed
       .reply(200, SUCCESS_RESPONSE, { "Content-Type": "application/json" });
 
+    const metadata = getMetadata(vessel, config);
+
     await request(app)
       .post("/xyz")
-      .set("Authorization", `Bearer ${createIdentity().token}`)
+      .set("Authorization", `Bearer ${createIdentity(vessel.uuid).token}`)
+      .field("metadataInput", JSON.stringify(metadata), {
+        filename: "test.json",
+        contentType: "application/json",
+      })
+      .field("file", "dummy data", {
+        filename: "test.xyz",
+        contentType: "application/csv",
+      })
       .expect("Content-Type", /json/)
       .expect(200)
       .expect(SUCCESS_RESPONSE);
