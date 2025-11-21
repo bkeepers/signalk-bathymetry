@@ -27,7 +27,7 @@
     "format": "eslint --fix && prettier --write .",
     "check": "eslint && prettier --check .",
     "prepare": "husky && npm run build",
-    "start": "node dist/server.js"
+    "start": "vercel dev -l 3001"
   },
   "bin": {
     "xyz-to-geojson": "bin/xyz-to-geojson"
@@ -54,6 +54,7 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.3",
+    "vercel": "^48.10.7",
     "vitest": "^4.0.8"
   },
   "dependencies": {

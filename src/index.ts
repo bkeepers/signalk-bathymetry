@@ -1,6 +1,7 @@
 import createPlugin from "./plugin.js";
 
 export default createPlugin;
+export * from "./constants.js";
 export * from "./sources/index.js";
 export * from "./streams/index.js";
 export * from "./types.js";
