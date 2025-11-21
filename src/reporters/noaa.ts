@@ -36,7 +36,7 @@ export function submitFormData(
     });
 
     const options: SubmitOptions = {
-      protocol: url.protocol == "https:" ? "https:" : "http:",
+      protocol: url.protocol === "https:" ? "https:" : "http:",
       host: url.hostname,
       path: url.pathname,
       port: url.port,

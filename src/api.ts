@@ -62,7 +62,7 @@ export function registerWithRouter(router: IRouter, options: APIOptions = {}) {
 
     // Validate that the uniqueID matches the identity UUID
     const { uuid } = res.locals;
-    const { uniqueID } = metadata && metadata.platform;
+    const uniqueID = metadata?.platform?.uniqueID;
     if (uniqueID !== `SIGNALK-${uuid}`) {
       return res
         .status(403)
@@ -130,7 +130,7 @@ export function xyzFromRequest(
     } catch (error) {
       reject(error);
     }
-    // res.status(404).json({ success: false, message: "Endpoint not found" });
+
   });
 }
 
