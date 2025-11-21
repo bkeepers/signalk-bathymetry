@@ -5,7 +5,6 @@ import { createReporter } from "./reporters/index.js";
 import { createSqliteSource } from "./sources/sqlite.js";
 import { getVesselInfo } from "./metadata.js";
 import { createApi } from "./api.js";
-import openApi from "./openApi.json" with { type: "json" };
 
 export default function createPlugin(app: ServerAPI): Plugin {
   // FIXME: types
@@ -45,7 +44,5 @@ export default function createPlugin(app: ServerAPI): Plugin {
     schema() {
       return schema(app);
     },
-
-    getOpenApi: () => openApi,
   };
 }
