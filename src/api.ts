@@ -130,7 +130,6 @@ export function xyzFromRequest(
     } catch (error) {
       reject(error);
     }
-
   });
 }
 
