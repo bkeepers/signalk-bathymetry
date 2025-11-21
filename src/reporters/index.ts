@@ -3,7 +3,6 @@ import { Config } from "../config";
 import { ServerAPI } from "@signalk/server-api";
 import { CronJob } from "cron";
 import { VesselInfo } from "../metadata";
-import { Readable } from "stream";
 import { BathymetrySource } from "../types";
 
 export * from "./noaa";
@@ -34,8 +33,11 @@ export function createReporter(
     );
     try {
       const data = await source.createReader({ from, to });
-      await submit(data);
-      app.debug("Report submitted successfully");
+      app.debug(
+        `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
+      );
+      const submission = await service.submit(data);
+      app.debug("Submission response: %j", submission);
       app.setPluginStatus(`Reported at ${to.toISOString()}`);
       source.logReport?.({ from, to });
     } catch (err) {
@@ -46,13 +48,6 @@ export function createReporter(
       );
       return;
     }
-  }
-
-  async function submit(data: Readable) {
-    app.debug(
-      `Reporting data from ${vessel.name} (${vessel.mmsi}) to ${service.url}`,
-    );
-    await service.submit(data);
   }
 
   return {
@@ -66,6 +61,5 @@ export function createReporter(
       app.debug(`Stopping reporter`);
       job.stop();
     },
-    submit,
   };
 }
