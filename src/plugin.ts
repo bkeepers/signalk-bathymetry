@@ -4,16 +4,11 @@ import { createCollector } from "./collector.js";
 import { createReporter } from "./reporters/index.js";
 import { createSqliteSource } from "./sources/sqlite.js";
 import { getVesselInfo } from "./metadata.js";
-import { createApi } from "./api.js";
 
 export default function createPlugin(app: ServerAPI): Plugin {
   // FIXME: types
   let collector: ReturnType<typeof createCollector> | undefined = undefined;
   let reporter: ReturnType<typeof createReporter> | undefined = undefined;
-
-  // Manually register API to avoid Signal K authentication
-  // @ts-expect-error `use` exists, but is not in the types
-  app.use("/bathymetry", createApi());
 
   return {
     id: "crowd-depth",
